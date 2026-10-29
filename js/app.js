@@ -4,7 +4,7 @@
 (function () {
   'use strict';
   const RIP = window.RIP;
-  const A = RIP.Audio, VO = RIP.Voice, SCRIPT = RIP.SCRIPT, VIS = RIP.visuals;
+  const A = RIP.Audio, SCRIPT = RIP.SCRIPT, VIS = RIP.visuals;
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => Array.from(document.querySelectorAll(s));
   const { esc, fmt } = RIP.util;
@@ -246,10 +246,10 @@
   }
   const P = {
     idx: -1, playing: false, t: 0, last: 0,
-    sceneGen: 0, speechGen: 0,
+    sceneGen: 0,
     cues: [], ticks: [], sCbs: [],
-    sIdx: -1, sEndAt: 0, waitGap: false, gapUntil: 0, speaking: false,
-    narrDone: false, narrDoneAt: 0, fired: new Set(), sStart: {}, voiceFails: 0,
+    sIdx: -1, sEndAt: 0,
+    narrDone: false, narrDoneAt: 0, fired: new Set(), sStart: {},
     est: SCRIPT.map(sceneEst), starts: [], total: 0,
     subsOn: store.get('subs', true),
   };
@@ -268,8 +268,6 @@
       else if (sc.label) { cur = sc.label; if (sc.v !== 'tomb') CHAPTERS.push({ i, label: sc.label }); }
       sceneLabel[i] = cur;
     }); }
-
-  const voiceActive = () => VO.on && VO.supported;
 
   function makeApi(layer, sc, i) {
     const g = P.sceneGen;
@@ -304,9 +302,8 @@
   function go(i) {
     if (i >= SCRIPT.length) { finish(); return; }
     if (i < 0) i = 0;
-    P.sceneGen++; P.speechGen++;
-    VO.stop(); A.duck(false);
-    Object.assign(P, { idx: i, t: 0, cues: [], ticks: [], sCbs: [], sIdx: -1, waitGap: false, speaking: false, narrDone: false, narrDoneAt: 0, fired: new Set(), sStart: {} });
+    P.sceneGen++;
+    Object.assign(P, { idx: i, t: 0, cues: [], ticks: [], sCbs: [], sIdx: -1, narrDone: false, narrDoneAt: 0, fired: new Set(), sStart: {} });
     const sc = SCRIPT[i];
     const stage = $('#stage');
     Array.from(stage.children).forEach((el) => {
@@ -347,8 +344,8 @@
     const sc = SCRIPT[P.idx];
     const lines = sc.n || [];
     if (k >= lines.length) {
-      P.narrDone = true; P.narrDoneAt = P.t; P.speaking = false;
-      setSub(''); A.duck(false);
+      P.narrDone = true; P.narrDoneAt = P.t;
+      setSub('');
       return;
     }
     P.sIdx = k;
@@ -359,32 +356,7 @@
       P.sStart[k] = P.t;
       P.sCbs.forEach((cb) => { if (cb.s === k) P.cues.push({ t: P.t + cb.d, fn: cb.fn }); });
     }
-    P.waitGap = false;
-    if (voiceActive()) {
-      const g = ++P.speechGen;
-      const t0 = P.t, expect = RIP.est(text);
-      P.speaking = true;
-      A.duck(true);
-      VO.speak(text, (reason) => {
-        if (g !== P.speechGen) return;
-        P.speaking = false; P.waitGap = true;
-        const took = P.t - t0;
-        if (reason === 'never-started' || took < expect * 0.35) {
-          // The engine bailed early (blocked, busy, or no voices) — keep the film's pace
-          // from the estimate instead, and give up on the voice after repeated failures.
-          P.gapUntil = Math.max(P.t + 0.15, t0 + expect);
-          if ((reason === 'never-started' || took < 0.25) && ++P.voiceFails >= 3) {
-            setVoice(false, false);
-            toast('Narrator voice unavailable — showing subtitles');
-          }
-        } else {
-          P.voiceFails = 0;
-          P.gapUntil = P.t + 0.15;
-        }
-      });
-    } else {
-      P.sEndAt = P.t + RIP.est(text) + 0.15; // same breathing room as the spoken path
-    }
+    P.sEndAt = P.t + RIP.est(text) + 0.15;
   }
 
   function frame(now) {
@@ -410,7 +382,6 @@
     for (const f of P.ticks) { try { f(P.t, dt); } catch (e) { console.error(e); } }
     if (!P.narrDone) {
       if (P.sIdx < 0) { if (P.t >= (sc.delay ?? 0.35)) startSentence(0); }
-      else if (voiceActive()) { if (P.waitGap && P.t >= P.gapUntil) startSentence(P.sIdx + 1); }
       else if (P.t >= P.sEndAt) startSentence(P.sIdx + 1);
     }
     if (P.t > P.est[P.idx] - 0.1) {
@@ -436,16 +407,12 @@
     P.playing = true;
     A.resume();
     $('#doc').classList.remove('paused');
-    if (!P.narrDone && P.sIdx >= 0 && voiceActive() && !P.waitGap) startSentence(P.sIdx);
     updatePlayBtn();
     poke();
   }
   function pause() {
     if (!P.playing) return;
     P.playing = false;
-    P.speechGen++;
-    VO.stop();
-    P.speaking = false;
     A.pause();
     $('#doc').classList.add('paused');
     updatePlayBtn();
@@ -462,16 +429,6 @@
     if (!P.playing) play();
   }
 
-  function setVoice(on, persist = true) {
-    VO.on = on;
-    if (persist) store.set('voice', on);
-    $('#cVoice').classList.toggle('on', on);
-    $('#splashVoice').checked = on;
-    if (P.idx < 0 || P.narrDone || P.sIdx < 0) return;
-    P.speechGen++; VO.stop(); P.speaking = false;
-    if (P.waitGap) return;
-    if (P.playing) startSentence(P.sIdx);
-  }
   function setMusic(on) { A.setOn(on); store.set('music', on); $('#cMusic').classList.toggle('on', on); }
   function setSubsOn(on) { P.subsOn = on; store.set('subs', on); $('#cSubs').classList.toggle('on', on); $('#subs').classList.toggle('hide', !on); }
   function setSub(text) {
@@ -530,10 +487,8 @@
   }
   function startFilm(i) {
     A.init();
-    if (voiceActive()) VO.unlock();
     $('#splash').hidden = true;
     P.playing = true;
-    P.voiceFails = 0;
     A.resume();
     $('#doc').classList.remove('paused');
     const from = i || RIP._startAt || 0;
@@ -542,17 +497,10 @@
     updatePlayBtn();
     poke();
   }
-  function toast(msg) {
-    const t = document.createElement('div');
-    t.className = 'toast';
-    t.textContent = msg;
-    $('#doc').appendChild(t);
-    setTimeout(() => t.remove(), 4200);
-  }
   function exitDoc(toBook) {
     P.playing = false; P.idx = -1;
-    P.sceneGen++; P.speechGen++;
-    VO.stop(); A.setMood(null); A.duck(false);
+    P.sceneGen++;
+    A.setMood(null);
     $('#stage').innerHTML = '';
     setSub('');
     $('#chaptersMenu').hidden = true;
@@ -567,12 +515,8 @@
   /* ═══════════════════════════ wiring ═══════════════════════════ */
   function wire() {
     // prefs
-    VO.on = store.get('voice', true) && VO.supported;
     A.on = store.get('music', true);
-    $('#cVoice').classList.toggle('on', VO.on);
     $('#cMusic').classList.toggle('on', A.on);
-    $('#splashVoice').checked = VO.on;
-    if (!VO.supported) { $('#cVoice').disabled = true; $('#cVoice').title = 'Narration voice not supported in this browser — subtitles only'; $('#splashVoice').disabled = true; }
     setSubsOn(P.subsOn);
 
     // cemetery
@@ -602,7 +546,6 @@
     $('#cPlay').addEventListener('click', toggle);
     $('#cNext').addEventListener('click', next);
     $('#cPrev').addEventListener('click', prev);
-    $('#cVoice').addEventListener('click', () => setVoice(!VO.on));
     $('#cMusic').addEventListener('click', () => setMusic(!A.on));
     $('#cSubs').addEventListener('click', () => setSubsOn(!P.subsOn));
     $('#cFull').addEventListener('click', toggleFull);
@@ -619,8 +562,7 @@
       const r = $('#progress').getBoundingClientRect();
       seekTo(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)));
     });
-    $('#splashPlay').addEventListener('click', () => { setVoice($('#splashVoice').checked); startFilm(0); });
-    $('#splashVoice').addEventListener('change', (e) => setVoice(e.target.checked));
+    $('#splashPlay').addEventListener('click', () => startFilm(0));
 
     const doc = $('#doc');
     doc.addEventListener('mousemove', () => poke());
@@ -640,7 +582,6 @@
         if (k === ' ' || k === 'k') { e.preventDefault(); toggle(); }
         else if (k === 'arrowright' || k === 'l') next();
         else if (k === 'arrowleft' || k === 'j') prev();
-        else if (k === 'n') setVoice(!VO.on);
         else if (k === 'm') setMusic(!A.on);
         else if (k === 'c') setSubsOn(!P.subsOn);
         else if (k === 'f') toggleFull();
@@ -678,7 +619,7 @@
     const s = parseInt(params.get('scene'), 10);
     if (!isNaN(s)) { RIP._startAt = s; }
     RIP.player = {
-      go, play, pause, startFilm, P, openDoc, exitDoc, setVoice, setMusic,
+      go, play, pause, startFilm, P, openDoc, exitDoc, setMusic,
       // test hook: advance the film clock without relying on requestAnimationFrame
       advance(sec, step = 1 / 30) { for (let k = 0; k < sec / step; k++) stepTime(step); updateProgress(true); return { idx: P.idx, t: +P.t.toFixed(2), s: P.sIdx }; },
     };

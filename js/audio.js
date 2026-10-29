@@ -1,6 +1,6 @@
 /* ──────────────────────────────────────────────────────────────────────────
-   CLOSED. — audio: a generative score, a box of sound effects, and a narrator.
-   Everything is synthesised live with the Web Audio API + speechSynthesis.
+   CLOSED. — audio: a generative score and a box of sound effects.
+   Everything is synthesised live with the Web Audio API.
    ────────────────────────────────────────────────────────────────────────── */
 (function () {
   'use strict';
@@ -287,133 +287,11 @@
   M.pause = function () { if (M.ctx && M.ctx.state === 'running') M.ctx.suspend(); };
   M.resume = function () { if (M.ctx && M.ctx.state === 'suspended') M.ctx.resume(); };
 
-  /* ═══════════════════════════ THE NARRATOR ═══════════════════════════ */
-  const V = (RIP.Voice = {
-    on: true,
-    supported: typeof window.speechSynthesis !== 'undefined' && typeof window.SpeechSynthesisUtterance !== 'undefined',
-    voice: null,
-    rate: 1,
-    pitch: 0.92,
-    keep: [],          // Chrome GCs utterances mid-sentence unless we hold on to them
-    lastCancel: 0,
-    used: false,       // only ever cancel speech we started (the queue can be shared across tabs)
-  });
-
-  // Prefer a dry British documentary voice; fall back gracefully.
-  const PREFS = [/^Daniel/i, /Google UK English Male/i, /^Arthur/i, /^Oliver/i, /^Malcolm/i, /^George/i,
-    /Microsoft (Ryan|George|Thomas)/i, /^Rishi/i, /^Aaron/i, /^Alex$/i];
-  V.pick = function () {
-    if (!V.supported) return;
-    const vs = speechSynthesis.getVoices();
-    if (!vs.length) return;
-    for (const p of PREFS) {
-      const v = vs.find((x) => p.test(x.name) && /^en/i.test(x.lang));
-      if (v) { V.voice = v; return; }
-    }
-    V.voice = vs.find((x) => /^en-GB/i.test(x.lang)) || vs.find((x) => /^en/i.test(x.lang)) || vs[0];
-  };
-  if (V.supported) {
-    V.pick();
-    if (speechSynthesis.addEventListener) speechSynthesis.addEventListener('voiceschanged', V.pick);
-    else speechSynthesis.onvoiceschanged = V.pick;
-  }
-
-  // Teach the robot to pronounce the industry.
-  const SAY = [
-    [/[“”"]/g, ''], [/[‘’]/g, "'"],
-    [/\bChatGPT\b/g, 'Chat G P T'],
-    [/\bOpenAI's\b/g, "Open A I's"], [/\bOpenAI\b/g, 'Open A I'],
-    [/\bGPT-4o\b/g, 'G P T four oh'],
-    [/\bgpt-oss\b/g, 'G P T O S S'],
-    [/\bGPT-(\d)/g, 'G P T $1'], [/\bGPT\b/g, 'G P T'],
-    [/\bo(\d)-mini\b/g, 'oh $1 mini'], [/\bo(\d)\b/g, 'oh $1'],
-    [/\bxAI\b/g, 'x A I'], [/\bAGI\b/g, 'A G I'], [/\bAPI\b/g, 'A P I'], [/\bCLIP\b/g, 'Clip'],
-    [/\br's\b/g, 'Rs'], [/6:49 PM/g, '6:49 P M'], [/\s—\s|—/g, ', '], [/–/g, ' to '],
-  ];
-  V.sayable = function (s) { return SAY.reduce((acc, [re, rep]) => acc.replace(re, rep), s); };
-
-  V.unlock = function () {
-    if (!V.supported || !/iPad|iPhone|iPod/.test(navigator.userAgent)) return;
-    try { const u = new SpeechSynthesisUtterance('a'); u.volume = 0; V.keep.push(u); speechSynthesis.speak(u); } catch (e) { /* ignore */ }
-  };
-
-  V.speak = function (text, done) {
-    if (!V.supported) { setTimeout(() => done('unsupported'), 0); return; }
-    if (V.abortCurrent) { V.abortCurrent(); V.abortCurrent = null; }
-    const u = new SpeechSynthesisUtterance(V.sayable(text));
-    if (V.voice) { u.voice = V.voice; u.lang = V.voice.lang; } else u.lang = 'en-GB';
-    u.rate = V.rate; u.pitch = V.pitch; u.volume = 1;
-    const est = RIP.est(text);
-    const maxSec = Math.max(est * 1.45 + 1.8, 4.0);
-    let finished = false, launchedAt = 0, sawSpeaking = false, quietTicks = 0;
-    function cleanup() { clearInterval(poller); clearTimeout(wd); if (V.abortCurrent === cleanup) V.abortCurrent = null; }
-    function fin(reason) { if (finished) return; finished = true; cleanup(); done(reason || 'end'); }
-    V.abortCurrent = () => { finished = true; cleanup(); };
-    u.onstart = () => { sawSpeaking = true; };
-    u.onend = () => fin('end');
-    u.onerror = () => fin('err');
-    const wd = setTimeout(() => {
-      try { speechSynthesis.cancel(); } catch (e) { /* ignore */ }
-      V.used = false; V.lastCancel = performance.now();
-      fin('timeout');
-    }, (maxSec + 1.0) * 1000);
-    // Chrome frequently drops u.onend after speaking finishes (or fails to start at all);
-    // poll speechSynthesis state so playback never stalls waiting for a lost event.
-    const poller = setInterval(() => {
-      if (finished || !launchedAt) return;
-      const elapsed = (performance.now() - launchedAt) / 1000;
-      try { if (speechSynthesis.paused) speechSynthesis.resume(); } catch (e) { /* ignore */ }
-      const active = speechSynthesis.speaking || speechSynthesis.pending;
-      if (active) {
-        sawSpeaking = true;
-        quietTicks = 0;
-        if (elapsed > maxSec) {
-          try { speechSynthesis.cancel(); } catch (e) { /* ignore */ }
-          V.used = false; V.lastCancel = performance.now();
-          fin('timeout');
-        }
-      } else if (sawSpeaking) {
-        if (++quietTicks >= 2) fin('polled-end');
-      } else if (elapsed > 0.9) {
-        fin('never-started');
-      }
-    }, 120);
-    V.keep.push(u); if (V.keep.length > 40) V.keep.shift();
-    V.used = true;
-    // Chrome swallows a speak() issued right after cancel(); wait it out — but stop() can
-    // still abort the pending launch so a stale line never plays into the next scene.
-    const launch = () => {
-      V.pendingTimer = 0;
-      if (finished) return;
-      launchedAt = performance.now();
-      try { if (speechSynthesis.paused) speechSynthesis.resume(); speechSynthesis.speak(u); } catch (e) { fin('err'); }
-    };
-    const since = performance.now() - V.lastCancel;
-    if (since < 160) V.pendingTimer = setTimeout(launch, 160 - since);
-    else launch();
-  };
-
-  V.stop = function () {
-    if (!V.supported) return;
-    if (V.pendingTimer) { clearTimeout(V.pendingTimer); V.pendingTimer = 0; }
-    if (V.abortCurrent) { V.abortCurrent(); V.abortCurrent = null; }
-    if (!V.used) return;
-    V.used = false;
-    V.lastCancel = performance.now();
-    try { speechSynthesis.cancel(); } catch (e) { /* ignore */ }
-  };
-
-  // Rough seconds-to-say for a line (calibrated on spoken expansion + macOS “Daniel”);
-  // also drives subtitle timing when the voice is off.
+  // Reading-pace duration (seconds) for an on-screen caption line.
   RIP.est = function (text) {
-    const spoken = V.sayable(text)
-      .replace(/\d+\.\d+/g, 'one point two')
-      .replace(/\d+:\d+/g, 'six forty nine')
-      .replace(/\b(19|20)\d\d\b/g, 'twenty twenty six')
-      .replace(/\b\d{2,}(st|nd|rd|th)?\b/g, 'twenty eight');
-    const w = spoken.trim().split(/\s+/).filter(Boolean).length;
+    const w = text.trim().split(/\s+/).length;
     const p = (text.match(/[,;:—–]/g) || []).length;
     const s = (text.match(/[.!?]/g) || []).length;
-    return 0.18 + w / 2.95 + p * 0.14 + s * 0.18;
+    return 0.15 + w / 3.0 + p * 0.12 + s * 0.18;
   };
 })();

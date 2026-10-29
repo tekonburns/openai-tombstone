@@ -28,12 +28,12 @@ To engrave a different URL without redeploying, add `?qr=https://your.site/whate
 | `index.html` | The cemetery, the player chrome, the book of condolences |
 | `css/style.css` | All styling, including every scene's look |
 | `js/qr.js` | Dependency-free QR encoder (byte mode, v1–40, L/M/Q/H, verified against jsQR) |
-| `js/audio.js` | Generative score + sound effects (Web Audio) and the narrator (speechSynthesis) |
-| `js/script.js` | The screenplay: every scene, its narration and cue timings |
+| `js/audio.js` | Generative score + sound effects (Web Audio) |
+| `js/script.js` | The screenplay: every scene, its captions and cue timings |
 | `js/visuals.js` | One builder per scene type — the "footage" |
-| `js/app.js` | The projector: scene scheduling, narration sync, controls, QR wiring, guestbook |
+| `js/app.js` | The projector: scene scheduling, caption sync, controls, QR wiring, guestbook |
 
-Keyboard: **Space** play/pause · **←/→** scenes · **N** narrator · **M** score · **C** subtitles ·
+Keyboard: **Space** play/pause · **←/→** scenes · **M** score · **C** subtitles ·
 **F** fullscreen (or pay respects, at the grave) · **Esc** back to the grave.
 Debug: `?scene=21` starts the film at scene 21.
 

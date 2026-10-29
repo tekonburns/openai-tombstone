@@ -297,7 +297,6 @@
     { h: 'Starring', lines: [['The deceased', 'OpenAI'], ['Its only child to go viral', 'ChatGPT'], ['The competition', 'Everyone else']] },
     {
       h: 'Crew', lines: [
-        ['Narrator', 'Your browser’s text-to-speech voice (not Sky)'],
         ['Original score', 'Generated live by the Web Audio API'],
         ['Screenplay', 'A competitor (obviously)'],
         ['Chart design', 'Not the GPT-5 launch team'],
