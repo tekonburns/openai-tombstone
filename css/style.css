@@ -78,13 +78,13 @@ code { font-family: var(--mono); font-size: .92em; background: rgba(255,255,255,
 .tomb { --W: min(410px, 80vw, calc((100vh - 250px) * .7)); position: relative; display: flex; flex-direction: column; align-items: center; }
 @supports (height: 100svh) { .tomb { --W: min(410px, 80vw, calc((100svh - 250px) * .7)); } }
 .stone {
-  position: relative; width: var(--W); font-size: calc(var(--W) / 100); padding: 15em 8em 6.5em; text-align: center;
+  position: relative; width: var(--W); font-size: calc(var(--W) / 100); padding: 15em 8em 7.5em; text-align: center;
   border-radius: 50% 50% 2.5% 2.5% / 23% 23% 2% 2%;
   background:
     radial-gradient(110% 60% at 78% 6%, rgba(225,232,255,.30), transparent 55%),
-    radial-gradient(60% 40% at 10% 95%, rgba(0,0,0,.25), transparent 70%),
+    radial-gradient(60% 40% at 10% 95%, rgba(0,0,0,.20), transparent 70%),
     var(--granite),
-    linear-gradient(176deg, #a3a5ac 0%, #888b92 38%, #65686f 100%);
+    linear-gradient(176deg, #a6a8af 0%, #8c8f96 42%, #72757d 100%);
   background-blend-mode: normal, normal, overlay, normal;
   background-size: auto, auto, cover, auto;
   box-shadow: inset 1.2em 0 2.4em rgba(255,255,255,.07), inset -2.6em -1.6em 4.8em rgba(0,0,0,.5), 0 2.4em 5em rgba(0,0,0,.7);
@@ -106,15 +106,13 @@ code { font-family: var(--mono); font-size: .92em; background: rgba(255,255,255,
 .e-cause { margin-top: .55em; font: 700 4.1em/1.15 var(--serif); letter-spacing: .2em; text-transform: uppercase; color: #282a2f; }
 .e-epitaph { margin-top: .7em; font: italic 500 4.6em/1.2 var(--serif); }
 .plaque {
-  position: relative; display: inline-flex; flex-direction: column; align-items: center; gap: 1.4em; margin-top: 4.6em; padding: 2.2em 2.2em 1.8em;
-  border-radius: 1.6em; text-decoration: none; cursor: pointer; transition: transform .35s cubic-bezier(.2,1.2,.4,1), box-shadow .35s;
-  background: linear-gradient(135deg, #6c522e 0%, #cfaa6b 28%, #8d6c3c 52%, #ddba7c 78%, #6c522e 100%);
-  box-shadow: 0 .6em 1.4em rgba(0,0,0,.55), inset 0 0 0 .4em rgba(0,0,0,.16), inset 0 .25em .4em rgba(255,255,255,.35);
+  position: relative; display: inline-flex; flex-direction: column; align-items: center; gap: 1.4em; margin-top: 3.4em; padding: .6em 1.2em;
+  text-decoration: none; color: inherit; cursor: pointer; transition: transform .28s ease, filter .28s ease;
 }
-.plaque:hover, .plaque:focus-visible { transform: translateY(-.6em) scale(1.03); box-shadow: 0 1.4em 2.8em rgba(0,0,0,.6), 0 0 3em rgba(214,180,106,.35), inset 0 0 0 .4em rgba(0,0,0,.16); outline: none; }
-.plaque-qr { display: block; width: 33em; padding: 1.3em; background: #efe8d8; border-radius: .7em; box-shadow: inset 0 0 .8em rgba(0,0,0,.35); }
-.plaque-qr svg { display: block; width: 100%; height: auto; }
-.plaque-label { font: 700 2.5em/1 var(--sans); letter-spacing: .26em; text-transform: uppercase; color: #3b2a12; text-shadow: 0 1px 0 rgba(255,255,255,.35); padding-left: .26em; }
+.plaque:hover, .plaque:focus-visible { transform: scale(1.025); filter: drop-shadow(0 0 1.4em rgba(255,248,220,.26)); outline: none; }
+.plaque-qr { display: block; width: 32em; }
+.plaque-qr svg { display: block; width: 100%; height: auto; opacity: .93; filter: drop-shadow(0 -1px 0 rgba(0,0,0,.55)) drop-shadow(0 1px 0 rgba(255,255,255,.26)); }
+.plaque-label { font: 600 3.1em/1 var(--serif); letter-spacing: .28em; text-transform: uppercase; color: #282a2f; text-shadow: 0 1px 0 rgba(255,255,255,.26), 0 -1px 0 rgba(0,0,0,.5); padding-left: .28em; }
 .plinth { width: calc(var(--W) * 1.2); height: calc(var(--W) * .085); margin-top: -2px; border-radius: 3px 3px 0 0;
   background: var(--granite), linear-gradient(#74777e, #45484e); background-blend-mode: overlay, normal; background-size: cover, auto;
   box-shadow: inset 0 3px 0 rgba(255,255,255,.12), inset 0 -10px 20px rgba(0,0,0,.4), 0 12px 30px rgba(0,0,0,.6); }
@@ -857,7 +855,6 @@ code { font-family: var(--mono); font-size: .92em; background: rgba(255,255,255,
   .cbtn.txt { padding: 0 6px; font-size: 10.5px; letter-spacing: .02em; }
   .btn { padding: 10px 13px; font-size: 13px; }
   .btn small { display: none; }
-  #btnQR { display: none; }
   .candle { display: none; }
 }
 @media (max-height: 560px) and (orientation: landscape) {

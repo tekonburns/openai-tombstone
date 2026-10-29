@@ -77,18 +77,14 @@
   function fillQR() {
     if (!window.QR) return;
     let svg;
-    try { svg = QR.toSVG(qrTarget, { ecl: 'Q', border: 2, dark: '#1d1810', light: '#efe8d8' }); } catch (e) { console.warn('QR failed', e); return; }
+    try { svg = QR.toSVG(qrTarget, { ecl: 'Q', border: 1, dark: '#212329', light: null }); } catch (e) { console.warn('QR failed', e); return; }
     $$('[data-qr]').forEach((el) => { el.innerHTML = svg; });
-    try {
-      const dl = QR.toSVG(qrTarget, { ecl: 'Q', border: 4, dark: '#000', light: '#fff' });
-      $('#btnQR').href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(dl);
-    } catch (e) { /* ignore */ }
     const hint = $('#qrHint');
     if (/^(file:|http:\/\/(localhost|127\.|0\.0\.0\.0))/i.test(qrTarget)) {
       hint.innerHTML = 'Heads-up: this QR points to <code>' + esc(qrTarget.replace(/#watch$/, '')) + '</code>, which only works on this computer. Host the folder (GitHub Pages, Netlify…) — or add <code>?qr=https://your.site</code> — to engrave a scannable link.';
       hint.classList.add('warn');
     } else {
-      hint.textContent = 'Scan the plaque with your phone — or tap it — to watch the documentary.';
+      hint.textContent = 'Scan the engraving with your phone — or tap it — to watch the documentary.';
     }
   }
 
@@ -175,7 +171,108 @@
     branch(tx, gy(tx) + 6, -Math.PI / 2 - 0.08, Math.min(H * 0.17, 150), Math.min(16, W / 60), 0);
   }
 
-  /* ═══════════════════════════ respects + flowers ═══════════════════════════ */
+  /* ═══════════════════════════ shared memorial (respects + condolences) ═══════════════════════════ */
+  const IS_TEST = params.has('test') || /jsdom/i.test(navigator.userAgent || '');
+  const IS_LOCAL = /^(localhost|127\.|0\.0\.0\.0)/.test(location.hostname) || location.protocol === 'file:';
+  const RESPECT_KEY = IS_LOCAL ? 'openai-tombstone-respects-dev' : 'openai-tombstone-respects';
+  const BOOK_TAG = IS_LOCAL ? 'closed-openai-tombstone-book-dev-v1' : 'closed-openai-tombstone-book-v1';
+  const RESPECT_TAG = IS_LOCAL ? 'closed-openai-tombstone-f-dev-v1' : 'closed-openai-tombstone-f-v1';
+  const ABACUS = 'https://abacus.jasoncameron.dev';
+  const RELAYS = ['wss://nos.lol', 'wss://relay.primal.net', 'wss://nostr.mom', 'wss://offchain.pub'];
+
+  // Compact SHA-256 + BIP-340 Schnorr (secp256k1) so visitors can sign public guestbook events
+  // across independent relays with zero accounts, API keys, or external libraries.
+  const K256 = new Uint32Array([
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+  ]);
+  function sha256(bytes) {
+    const rotr = (x, n) => (x >>> n) | (x << (32 - n));
+    const H = new Uint32Array([0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19]);
+    const l = bytes.length, padLen = (l + 9 + 63) & ~63, buf = new Uint8Array(padLen);
+    buf.set(bytes); buf[l] = 0x80;
+    const dv = new DataView(buf.buffer);
+    dv.setUint32(padLen - 8, Math.floor((l * 8) / 0x100000000));
+    dv.setUint32(padLen - 4, (l * 8) >>> 0);
+    const W = new Uint32Array(64);
+    for (let i = 0; i < padLen; i += 64) {
+      for (let j = 0; j < 16; j++) W[j] = dv.getUint32(i + j * 4);
+      for (let j = 16; j < 64; j++) {
+        const s0 = rotr(W[j - 15], 7) ^ rotr(W[j - 15], 18) ^ (W[j - 15] >>> 3);
+        const s1 = rotr(W[j - 2], 17) ^ rotr(W[j - 2], 19) ^ (W[j - 2] >>> 10);
+        W[j] = (W[j - 16] + s0 + W[j - 7] + s1) >>> 0;
+      }
+      let [a, b, c, d, e, f, g, h] = H;
+      for (let j = 0; j < 64; j++) {
+        const t1 = (h + (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)) + ((e & f) ^ (~e & g)) + K256[j] + W[j]) >>> 0;
+        const t2 = ((rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) >>> 0;
+        h = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = b; b = a; a = (t1 + t2) >>> 0;
+      }
+      for (let j = 0; j < 8; j++) H[j] = (H[j] + [a, b, c, d, e, f, g, h][j]) >>> 0;
+    }
+    const out = new Uint8Array(32), odv = new DataView(out.buffer);
+    for (let j = 0; j < 8; j++) odv.setUint32(j * 4, H[j]);
+    return out;
+  }
+
+  const SECP_P = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2Fn;
+  const SECP_N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141n;
+  const SECP_G = [
+    0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798n,
+    0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8n,
+  ];
+  const fmod = (a, m = SECP_P) => ((a % m) + m) % m;
+  const fpow = (b, e, m = SECP_P) => { let r = 1n; b = fmod(b, m); while (e > 0n) { if (e & 1n) r = (r * b) % m; b = (b * b) % m; e >>= 1n; } return r; };
+  const finv = (a) => fpow(a, SECP_P - 2n, SECP_P);
+  const pdbl = (p) => {
+    if (!p || p[1] === 0n) return null;
+    const m = fmod(3n * p[0] * p[0] * finv(2n * p[1])), x = fmod(m * m - 2n * p[0]);
+    return [x, fmod(m * (p[0] - x) - p[1])];
+  };
+  const padd = (p, q) => {
+    if (!p) return q;
+    if (!q) return p;
+    if (p[0] === q[0]) return p[1] !== q[1] ? null : pdbl(p);
+    const m = fmod((q[1] - p[1]) * finv(q[0] - p[0])), x = fmod(m * m - p[0] - q[0]);
+    return [x, fmod(m * (p[0] - x) - p[1])];
+  };
+  const pmul = (k) => { let r = null, c = SECP_G; while (k > 0n) { if (k & 1n) r = padd(r, c); c = pdbl(c); k >>= 1n; } return r; };
+  const utf8 = (s) => new TextEncoder().encode(s);
+  const b2hex = (b) => Array.from(b, (v) => v.toString(16).padStart(2, '0')).join('');
+  const n2b32 = (n) => { const h = n.toString(16).padStart(64, '0'), u = new Uint8Array(32); for (let i = 0; i < 32; i++) u[i] = parseInt(h.slice(i * 2, i * 2 + 2), 16); return u; };
+  const b2num = (b) => BigInt('0x' + b2hex(b));
+  const randBytes32 = () => {
+    const u = new Uint8Array(32);
+    if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(u);
+    else for (let i = 0; i < 32; i++) u[i] = (Math.random() * 256) | 0;
+    return u;
+  };
+  function signNostr(tag, payload) {
+    let d = (b2num(randBytes32()) % (SECP_N - 1n)) + 1n;
+    const Ppt = pmul(d);
+    if (Ppt[1] & 1n) d = SECP_N - d;
+    const pubkey = b2hex(n2b32(Ppt[0]));
+    const ev = { pubkey, created_at: Math.floor(Date.now() / 1000), kind: 1, tags: [['t', tag]], content: JSON.stringify(payload) };
+    const idBytes = sha256(utf8(JSON.stringify([0, ev.pubkey, ev.created_at, ev.kind, ev.tags, ev.content])));
+    ev.id = b2hex(idBytes);
+    let k = (b2num(randBytes32()) % (SECP_N - 1n)) + 1n;
+    const R = pmul(k);
+    if (R[1] & 1n) k = SECP_N - k;
+    const th = sha256(utf8('BIP0340/challenge'));
+    const chIn = new Uint8Array(160);
+    chIn.set(th, 0); chIn.set(th, 32); chIn.set(n2b32(R[0]), 64); chIn.set(n2b32(Ppt[0]), 96); chIn.set(idBytes, 128);
+    const e = b2num(sha256(chIn)) % SECP_N;
+    const s = fmod(k + e * d, SECP_N);
+    ev.sig = b2hex(n2b32(R[0])) + b2hex(n2b32(s));
+    return ev;
+  }
+
   const PETALS = ['#c0392b', '#e9e4da', '#8e6cc4', '#e58fb1', '#f0c24b', '#d65a4a'];
   function flowerSVG(color) {
     return `<svg viewBox="0 0 40 64" aria-hidden="true"><path d="M20 62C19 48 21 36 20 24" stroke="#2f5d2a" stroke-width="2" fill="none"/>
@@ -194,18 +291,31 @@
     el.innerHTML = flowerSVG(PETALS[Math.floor(r() * PETALS.length)]);
     $('#flowerbed').appendChild(el);
   }
+  let respectsCount = store.get('respects', 0);
+  function syncFlowers(n, animateLast) {
+    const bed = $('#flowerbed');
+    const cap = Math.min(n, 48);
+    while (bed.children.length < cap) {
+      const idx = bed.children.length;
+      plantFlower(idx, !!(animateLast && idx === cap - 1));
+    }
+  }
   function renderRespects() {
-    const n = store.get('respects', 0);
-    $('#respectCount').textContent = fmt(n);
-    $$('[data-respects]').forEach((el) => { el.textContent = fmt(n); });
-    return n;
+    $('#respectCount').textContent = fmt(respectsCount);
+    $$('[data-respects]').forEach((el) => { el.textContent = fmt(respectsCount); });
+    return respectsCount;
+  }
+  function setRespects(n, animateLast) {
+    if (!Number.isFinite(n) || n < 0) return respectsCount;
+    if (n > respectsCount) respectsCount = n;
+    store.set('respects', respectsCount);
+    renderRespects();
+    syncFlowers(respectsCount, animateLast);
+    return respectsCount;
   }
   function payRespects(ev) {
     A.init();
-    const n = store.get('respects', 0) + 1;
-    store.set('respects', n);
-    renderRespects();
-    if ($('#flowerbed').children.length < 48) plantFlower(n - 1, true);
+    const nextN = setRespects(respectsCount + 1, true);
     A.sfx('chime');
     const f = document.createElement('div');
     f.className = 'press-f';
@@ -215,6 +325,17 @@
     f.style.top = (src ? src.top : innerHeight * 0.6) + 'px';
     document.body.appendChild(f);
     setTimeout(() => f.remove(), 1600);
+    if (!IS_TEST) {
+      fetch(`${ABACUS}/hit/tekonburns.github.io/${RESPECT_KEY}`, { cache: 'no-store', keepalive: true })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          const v = d && Number.isFinite(d.value) ? setRespects(d.value, false) : nextN;
+          try { publishNostr(signNostr(RESPECT_TAG, { n: v })); } catch (e) { /* ignore */ }
+        })
+        .catch(() => {
+          try { publishNostr(signNostr(RESPECT_TAG, { n: nextN })); } catch (e) { /* ignore */ }
+        });
+    }
   }
 
   /* ═══════════════════════════ book of condolences ═══════════════════════════ */
@@ -229,12 +350,177 @@
     { m: 'Thanks for the 117 million parameters that started it all.', a: 'A grad student, 2018' },
     { m: 'rip. lowercase, out of respect.', a: 'Anonymous' },
   ];
+  const bookMap = new Map();
+  const myBookIds = new Set();
+  let bookOrd = 0;
+
+  function sortedBookEntries() {
+    return Array.from(bookMap.values())
+      .sort((a, b) => (b.ts || 0) - (a.ts || 0) || (b.ord || 0) - (a.ord || 0))
+      .slice(0, 100);
+  }
   function renderBook() {
-    const mine = store.get('book', []);
-    $('#bookList').innerHTML = mine.concat(SEED).map((e) => `<li${e.d ? ' class="mine"' : ''}>
+    const live = sortedBookEntries();
+    $('#bookList').innerHTML = live.concat(SEED).map((e) => `<li${myBookIds.has(e.id) || (IS_TEST && e.d) ? ' class="mine"' : ''}>
       <p>“${esc(e.m)}”</p><span>— ${esc(e.a || 'A mourner')}${e.d ? ' · ' + esc(e.d) : ''}</span></li>`).join('');
   }
-  function openBook() { renderBook(); $('#book').hidden = false; setTimeout(() => $('#bookMsg').focus({ preventScroll: true }), 50); }
+  function addBookEntry(m, a) {
+    const d = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const ts = Math.floor(Date.now() / 1000);
+    let id = 'local-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+    let ev = null;
+    if (!IS_TEST) {
+      try { ev = signNostr(BOOK_TAG, { m, a, d }); id = ev.id; } catch (e) { /* local fallback */ }
+    }
+    const entry = { id, m, a, d, ts: ev ? ev.created_at : ts, ord: ++bookOrd, synced: false, ev };
+    myBookIds.add(id);
+    bookMap.set(id, entry);
+    const mine = [entry].concat(store.get('book', []).filter((x) => x.id !== id)).slice(0, 100);
+    store.set('book', mine);
+    renderBook();
+    if (ev) publishNostr(ev);
+  }
+
+  /* ---------- relay + counter sync ---------- */
+  const relayPool = new Map();
+  const outbox = new Map();
+  let bookRenderT = 0;
+
+  function publishNostr(ev) {
+    if (IS_TEST || !ev || !ev.id) return;
+    outbox.set(ev.id, ev);
+    connectRelays();
+    relayPool.forEach((slot) => {
+      if (slot.ws && slot.ws.readyState === 1 && !slot.sent.has(ev.id)) {
+        slot.sent.add(ev.id);
+        try { slot.ws.send(JSON.stringify(['EVENT', ev])); } catch (e) { /* ignore */ }
+      }
+    });
+  }
+  function markBookSynced(id) {
+    const mine = store.get('book', []);
+    let changed = false;
+    mine.forEach((e) => { if (e.id === id && !e.synced) { e.synced = true; delete e.ev; changed = true; } });
+    if (changed) store.set('book', mine);
+  }
+  function onRelayEvent(ev) {
+    if (!ev || ev.kind !== 1 || !Array.isArray(ev.tags)) return;
+    const tTag = ev.tags.find((t) => t[0] === 't');
+    const tag = tTag && tTag[1];
+    if (tag === BOOK_TAG) {
+      if (bookMap.has(ev.id)) return;
+      let p;
+      try { p = JSON.parse(ev.content); } catch (e) { return; }
+      if (!p || typeof p.m !== 'string' || !p.m.trim()) return;
+      const dStr = typeof p.d === 'string' && p.d.length <= 40
+        ? p.d
+        : new Date((ev.created_at || 0) * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      bookMap.set(ev.id, {
+        id: ev.id,
+        m: p.m.trim().slice(0, 280),
+        a: (typeof p.a === 'string' && p.a.trim() ? p.a.trim() : 'A mourner').slice(0, 60),
+        d: dStr,
+        ts: ev.created_at || 0,
+        ord: 0,
+      });
+      store.set('bookCache', sortedBookEntries().map(({ id, m, a, d, ts }) => ({ id, m, a, d, ts })));
+      clearTimeout(bookRenderT);
+      bookRenderT = setTimeout(() => { if (!$('#book').hidden) renderBook(); }, 60);
+    } else if (tag === RESPECT_TAG) {
+      let p;
+      try { p = JSON.parse(ev.content); } catch (e) { return; }
+      if (p && Number.isFinite(p.n) && p.n > respectsCount) {
+        setRespects(p.n, document.body.dataset.view === 'cemetery');
+      }
+    }
+  }
+  function connectRelays() {
+    if (IS_TEST || typeof WebSocket === 'undefined') return;
+    RELAYS.forEach((url) => {
+      const cur = relayPool.get(url);
+      if (cur && cur.ws && (cur.ws.readyState === 0 || cur.ws.readyState === 1)) return;
+      let ws;
+      try { ws = new WebSocket(url); } catch (e) { return; }
+      const slot = { ws, sent: new Set() };
+      relayPool.set(url, slot);
+      ws.onopen = () => {
+        try { ws.send(JSON.stringify(['REQ', 'mem', { kinds: [1], '#t': [BOOK_TAG, RESPECT_TAG], limit: 150 }])); } catch (e) { /* ignore */ }
+        outbox.forEach((ev, id) => {
+          if (!slot.sent.has(id)) {
+            slot.sent.add(id);
+            try { ws.send(JSON.stringify(['EVENT', ev])); } catch (e) { /* ignore */ }
+          }
+        });
+      };
+      ws.onmessage = (m) => {
+        let msg;
+        try { msg = JSON.parse(m.data); } catch (e) { return; }
+        if (!Array.isArray(msg)) return;
+        if (msg[0] === 'EVENT' && msg[2]) onRelayEvent(msg[2]);
+        else if (msg[0] === 'OK' && msg[1] && msg[2] === true) markBookSynced(msg[1]);
+      };
+      ws.onerror = () => {};
+      ws.onclose = () => { if (relayPool.get(url) === slot) relayPool.delete(url); };
+    });
+  }
+  async function syncRespectsRemote() {
+    if (IS_TEST) return;
+    try {
+      const r = await fetch(`${ABACUS}/get/tekonburns.github.io/${RESPECT_KEY}`, { cache: 'no-store' });
+      const remote = r.ok ? ((await r.json()).value || 0) : 0;
+      const migrated = store.get('respectsMigrated', false);
+      if (!migrated) {
+        store.set('respectsMigrated', true);
+        if (respectsCount > remote) {
+          const delta = Math.min(respectsCount - remote, 15);
+          let latest = remote;
+          for (let i = 0; i < delta; i++) {
+            const hr = await fetch(`${ABACUS}/hit/tekonburns.github.io/${RESPECT_KEY}`, { cache: 'no-store' });
+            if (hr.ok) latest = (await hr.json()).value || latest;
+          }
+          setRespects(latest, false);
+          return;
+        }
+      }
+      setRespects(remote, false);
+    } catch (e) { /* offline fallback */ }
+  }
+  function initMemorial() {
+    store.get('bookCache', []).forEach((e) => { if (e && e.id && e.m) bookMap.set(e.id, e); });
+    const mine = store.get('book', []);
+    let dirty = false;
+    mine.forEach((e, idx) => {
+      if (!e || !e.m) return;
+      if (!e.id && !IS_TEST) {
+        try {
+          const ev = signNostr(BOOK_TAG, { m: e.m, a: e.a, d: e.d });
+          e.id = ev.id; e.ts = ev.created_at; e.synced = false; e.ev = ev;
+          dirty = true;
+        } catch (err) { /* ignore */ }
+      }
+      const id = e.id || ('legacy-' + idx);
+      e.id = id;
+      e.ord = mine.length - idx;
+      myBookIds.add(id);
+      bookMap.set(id, e);
+      if (!IS_TEST && !e.synced && e.ev) outbox.set(id, e.ev);
+    });
+    bookOrd = mine.length + 1;
+    if (dirty) store.set('book', mine);
+    renderRespects();
+    syncFlowers(respectsCount, false);
+    if (!IS_TEST) {
+      syncRespectsRemote();
+      setTimeout(connectRelays, 50);
+    }
+  }
+
+  function openBook() {
+    if (!IS_TEST) connectRelays();
+    renderBook();
+    $('#book').hidden = false;
+    setTimeout(() => $('#bookMsg').focus({ preventScroll: true }), 50);
+  }
   function closeBook() { $('#book').hidden = true; }
 
   /* ═══════════════════════════ THE PROJECTOR ═══════════════════════════ */
@@ -524,7 +810,6 @@
     $('#plaque').addEventListener('click', (e) => { e.preventDefault(); history.replaceState(null, '', '#watch'); openDoc(true); });
     $('#btnRespects').addEventListener('click', payRespects);
     $('#btnBook').addEventListener('click', openBook);
-    $('#btnQR').addEventListener('click', (e) => { if ($('#btnQR').getAttribute('href') === '#') e.preventDefault(); });
 
     // book
     $('#bookClose').addEventListener('click', closeBook);
@@ -535,10 +820,8 @@
       e.preventDefault();
       const m = $('#bookMsg').value.trim();
       if (!m) return;
-      const entry = { m, a: $('#bookName').value.trim() || 'A mourner', d: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) };
-      store.set('book', [entry].concat(store.get('book', [])).slice(0, 100));
+      addBookEntry(m, $('#bookName').value.trim() || 'A mourner');
       $('#bookMsg').value = '';
-      renderBook();
       A.init(); A.sfx('chime');
     });
 
@@ -599,7 +882,10 @@
     window.addEventListener('hashchange', () => {
       if (location.hash === '#watch' && document.body.dataset.view !== 'doc') openDoc(false);
     });
-    document.addEventListener('visibilitychange', () => { if (document.hidden && P.playing) pause(); });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && P.playing) pause();
+      else if (!document.hidden && !IS_TEST) { syncRespectsRemote(); connectRelays(); }
+    });
     window.addEventListener('resize', () => { clearTimeout(sky.rt); sky.rt = setTimeout(sizeSky, 150); });
   }
 
@@ -608,8 +894,7 @@
     fillQR();
     sizeSky();
     requestAnimationFrame(drawSky);
-    const n = renderRespects();
-    for (let i = 0; i < Math.min(n, 48); i++) plantFlower(i, false);
+    initMemorial();
     wire();
     requestAnimationFrame(frame);
     $('#cTime').textContent = `0:00 / ${fmtTime(P.total)}`;

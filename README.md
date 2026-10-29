@@ -16,10 +16,9 @@ will then encode a `file://` URL that only your own machine can open.
 
 ## Make the QR scannable
 
-The plaque encodes the page's own URL (`…/index.html#watch`). Host the folder anywhere static
-(GitHub Pages, Netlify, Cloudflare Pages) and the engraved code points at the live documentary.
+The tombstone engraving encodes the page's own URL (`…/index.html#watch`). Host the folder anywhere static
+(GitHub Pages, Netlify, Cloudflare Pages) and the carved code points at the live documentary.
 To engrave a different URL without redeploying, add `?qr=https://your.site/whatever`.
-"Download QR" saves a clean black-and-white SVG for printing.
 
 ## What's inside
 
