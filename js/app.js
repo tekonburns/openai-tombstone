@@ -546,13 +546,16 @@
   }
   recalcTimeline();
 
-  // chapter labels for the top bar + chapter menu
+  // chapter labels + effective score mood for every scene (so seeking always plays the right music)
   const CHAPTERS = [];
   const sceneLabel = [];
-  { let cur = ''; SCRIPT.forEach((sc, i) => {
+  const sceneMood = [];
+  { let cur = '', curMood = null; SCRIPT.forEach((sc, i) => {
       if (sc.v === 'chapter') { cur = sc.num ? `${sc.num} · ${sc.title}` : `${sc.label} · ${sc.title}`; CHAPTERS.push({ i, label: cur }); }
       else if (sc.label) { cur = sc.label; if (sc.v !== 'tomb') CHAPTERS.push({ i, label: sc.label }); }
+      if ('mood' in sc) curMood = sc.mood;
       sceneLabel[i] = cur;
+      sceneMood[i] = curMood;
     }); }
 
   function makeApi(layer, sc, i) {
@@ -616,7 +619,7 @@
     }));
     void el.offsetWidth;
     el.classList.add('in');
-    if ('mood' in sc) A.setMood(sc.mood);
+    A.setMood(sceneMood[i]);
     const doc = $('#doc');
     doc.classList.toggle('is-old', sc.era === 'old');
     doc.classList.toggle('is-dram', !!sc.dram);
@@ -691,6 +694,7 @@
   function play() {
     if (P.playing || P.idx < 0) return;
     P.playing = true;
+    A.init();
     A.resume();
     $('#doc').classList.remove('paused');
     updatePlayBtn();
@@ -787,6 +791,7 @@
     P.playing = false; P.idx = -1;
     P.sceneGen++;
     A.setMood(null);
+    A.resume();
     $('#stage').innerHTML = '';
     setSub('');
     $('#chaptersMenu').hidden = true;
@@ -804,6 +809,11 @@
     A.on = store.get('music', true);
     $('#cMusic').classList.toggle('on', A.on);
     setSubsOn(P.subsOn);
+
+    // pre-unlock Web Audio on mobile touch before click fires
+    $$('#btnWatch, #plaque, #splashPlay, #cPlay, #btnRespects, #bookRespects').forEach((el) => {
+      el.addEventListener('touchend', () => A.init(), { passive: true });
+    });
 
     // cemetery
     $('#btnWatch').addEventListener('click', () => { history.replaceState(null, '', '#watch'); openDoc(true); });

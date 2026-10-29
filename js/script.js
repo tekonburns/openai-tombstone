@@ -21,7 +21,7 @@
 
   RIP.SCRIPT = [
     /* ─────────────── studio idents ─────────────── */
-    { v: 'ident', kind: 'hp', dur: 2.2, kb: false, mood: null },
+    { v: 'ident', kind: 'hp', dur: 2.2, kb: false, mood: 'void' },
     { v: 'ident', kind: 'kc', dur: 2.3, kb: false },
 
     /* ─────────────── cold open ─────────────── */
