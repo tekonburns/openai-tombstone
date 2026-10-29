@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CLOSED. — The Life &amp; Death of OpenAI (2015–2026)</title>
+  <meta name="description" content="The documentary behind the QR code on OpenAI's tombstone. 2015–2026. Eliminated by competition.">
+  <meta name="theme-color" content="#07080c">
+  <meta property="og:title" content="CLOSED. — The Life & Death of OpenAI">
+  <meta property="og:description" content="Here lies OpenAI, 2015–2026. Eliminated by competition. Scan the tombstone to watch the documentary.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%AA%A6%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Special+Elite&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ════════════════════════ THE CEMETERY ════════════════════════ -->
+  <section id="cemetery" class="view active" aria-label="OpenAI's grave">
+    <canvas id="sky" aria-hidden="true"></canvas>
+    <div class="moon" aria-hidden="true"></div>
+    <canvas id="scenery" aria-hidden="true"></canvas>
+    <div class="fog f1" aria-hidden="true"></div>
+    <div class="fog f2" aria-hidden="true"></div>
+
+    <header class="cem-head">
+      <div class="cem-park">Silicon Valley Memorial Park</div>
+      <div class="cem-plot">Section A.I. · Row 2026 · Plot 404</div>
+    </header>
+
+    <!-- neighbours: other things that were eliminated -->
+    <div class="neighbors" aria-hidden="true">
+      <div class="nb nb1"><b>Netscape</b><i>1994 – 2008</i><small>Eliminated by competition</small></div>
+      <div class="nb nb2"><b>AltaVista</b><i>1995 – 2013</i><small>Also eliminated by competition</small></div>
+      <div class="nb nb3"><b>Clippy</b><i>1997 – 2007</i><small>“It looks like you’re writing a eulogy. Would you like help?”</small></div>
+      <div class="nb nb4"><b>Google+</b><i>2011 – 2019</i><small>Eliminated by its own parents</small></div>
+    </div>
+
+    <div class="grave">
+      <div class="tomb" id="mainTomb">
+        <div class="stone">
+          <div class="crack" aria-hidden="true"></div>
+          <div class="moss m1" aria-hidden="true"></div>
+          <div class="moss m2" aria-hidden="true"></div>
+          <div class="engr">
+            <div class="e-top">In loving memory of</div>
+            <h1 class="e-name">OpenAI</h1>
+            <div class="e-dates">Dec 11, 2015 <span>—</span> Oct 28, 2026</div>
+            <div class="e-rule" aria-hidden="true"></div>
+            <div class="e-forms">Nonprofit · Capped-profit · PBC · Closed</div>
+            <div class="e-cause">Eliminated by competition</div>
+            <div class="e-epitaph">“It was never open.<br>Now it’s closed.”</div>
+          </div>
+          <a class="plaque" href="#watch" id="plaque" title="Scan — or tap — to watch the documentary">
+            <span class="plaque-qr" data-qr></span>
+            <span class="plaque-label">Scan for documentary</span>
+          </a>
+        </div>
+        <div class="plinth" aria-hidden="true"></div>
+      </div>
+      <div class="flowerbed" id="flowerbed" aria-hidden="true"></div>
+      <div class="candle c1" aria-hidden="true"><i class="flame"></i></div>
+      <div class="candle c2" aria-hidden="true"><i class="flame"></i></div>
+    </div>
+
+    <div class="fog f3" aria-hidden="true"></div>
+
+    <nav class="cem-actions">
+      <button id="btnWatch" class="btn primary"><span class="ico">▶</span> Watch the documentary <small>~6 min</small></button>
+      <button id="btnRespects" class="btn"><span class="ico">🌹</span> Pay respects <kbd>F</kbd> <span class="count" id="respectCount">0</span></button>
+      <button id="btnBook" class="btn"><span class="ico">📖</span> Book of condolences</button>
+      <a id="btnQR" class="btn ghost" download="openai-tombstone-qr.svg" href="#">Download QR</a>
+    </nav>
+    <p class="cem-hint" id="qrHint"></p>
+  </section>
+
+  <!-- ════════════════════════ THE DOCUMENTARY ════════════════════════ -->
+  <section id="doc" class="view" aria-label="Documentary: CLOSED. The Life and Death of OpenAI">
+    <div class="stage" id="stage"></div>
+    <div class="fx scratches" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="fx grain" aria-hidden="true"></div>
+    <div class="fx vignette" aria-hidden="true"></div>
+
+    <div class="lbar top">
+      <span class="brand">CLOSED<em>.</em></span>
+      <span class="chap" id="chapLabel"></span>
+      <span class="dram" id="dramBadge">Dramatization</span>
+    </div>
+    <div class="lbar bottom" aria-hidden="true"></div>
+
+    <div class="subs" id="subs" aria-live="polite"><span></span></div>
+
+    <div class="controls" id="controls">
+      <div class="progress" id="progress" title="Seek">
+        <div class="track"><div class="fill" id="progFill"></div></div>
+        <div class="marks" id="progMarks"></div>
+      </div>
+      <div class="crow">
+        <button id="cPrev" class="cbtn" title="Previous scene (←)" aria-label="Previous scene">⏮</button>
+        <button id="cPlay" class="cbtn play" title="Play / pause (Space)" aria-label="Play or pause">❚❚</button>
+        <button id="cNext" class="cbtn" title="Next scene (→)" aria-label="Next scene">⏭</button>
+        <span class="ctime" id="cTime">0:00 / 0:00</span>
+        <span class="cspacer"></span>
+        <button id="cChapters" class="cbtn txt" title="Chapters">Chapters</button>
+        <button id="cVoice" class="cbtn txt on" title="Narration voice (N)">Narrator</button>
+        <button id="cMusic" class="cbtn txt on" title="Score (M)">Score</button>
+        <button id="cSubs" class="cbtn txt on" title="Subtitles (C)">CC</button>
+        <button id="cFull" class="cbtn" title="Fullscreen (F)" aria-label="Fullscreen">⛶</button>
+        <button id="cExit" class="cbtn" title="Back to the grave (Esc)" aria-label="Back to the grave">✕</button>
+      </div>
+      <div class="chapters" id="chaptersMenu" hidden></div>
+    </div>
+
+    <div class="splash" id="splash" hidden>
+      <div class="splash-in">
+        <div class="splash-kicker">The documentary on OpenAI’s tombstone</div>
+        <div class="splash-title">CLOSED<em>.</em></div>
+        <div class="splash-sub">The Life &amp; Death of OpenAI · 2015 – 2026</div>
+        <button id="splashPlay" class="play-big" aria-label="Play the documentary">▶</button>
+        <div class="splash-meta">~6 minutes · best with sound on</div>
+        <label class="splash-opt"><input type="checkbox" id="splashVoice" checked> Narrator voice</label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════ BOOK OF CONDOLENCES ════════════════════════ -->
+  <div class="modal" id="book" hidden role="dialog" aria-modal="true" aria-labelledby="bookTitle">
+    <div class="modal-card">
+      <button class="modal-x" id="bookClose" aria-label="Close">✕</button>
+      <div class="book-kicker">OpenAI · 2015 – 2026</div>
+      <h2 id="bookTitle">Book of Condolences</h2>
+      <form id="bookForm" autocomplete="off">
+        <textarea id="bookMsg" maxlength="280" rows="3" placeholder="Leave a few words for the deceased…" required></textarea>
+        <div class="book-row">
+          <input id="bookName" maxlength="60" placeholder="Signed (optional)">
+          <button class="btn primary" type="submit">Sign the book</button>
+        </div>
+        <p class="book-note">Entries are kept only in this browser. Like most things, they are not open.</p>
+      </form>
+      <ol class="book-list" id="bookList"></ol>
+      <div class="book-foot">
+        <button class="btn" id="bookRespects">🌹 Pay respects <span class="count" data-respects>0</span></button>
+        <button class="btn primary" id="bookWatch">▶ Watch again</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/qr.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/script.js"></script>
+  <script src="js/visuals.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
