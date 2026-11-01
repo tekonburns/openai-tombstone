@@ -37,6 +37,12 @@ Keyboard: **Space** play/pause · **←/→** scenes · **M** score · **C** sub
 **F** fullscreen (or pay respects, at the grave) · **Esc** back to the grave.
 Debug: `?scene=21` starts the film at scene 21.
 
+## Deploying an update
+
+GitHub Pages caches everything for 10 minutes, and browsers may keep old `js/*.js` even after
+re-fetching `index.html`. Run `tools/bump.sh` before committing: it stamps a fresh `?v=` on the
+CSS/JS URLs so every returning visitor gets the new build on their next load.
+
 ## Link previews
 
 `index.html` carries Open Graph + `twitter:card = summary_large_image` tags pointing at

@@ -206,14 +206,15 @@
       n: [
         'When switching costs nothing, loyalty is worth about the same.',
         'Eight hundred million weekly users discovered they could simply open another tab.',
+        'By the start of October, the patient was barely breathing.',
       ],
       tail: 0.7,
     },
     {
-      /* The 28-day shipping streak posted by @thsottiaux (Oct 5 – Nov 1, 2026). Days 1–27 are the
-         real posts, lightly abridged. Day 28 — the day it dies — is tomorrow’s, as promised in
+      /* CPR: the 28-day shipping streak posted by @thsottiaux (Oct 5 – Nov 1, 2026). Days 1–27 are
+         the real posts, lightly abridged. Day 28 — the day it dies — is tomorrow’s, as promised in
          Day 26 (“Next two days will be resets… banked”). */
-      v: 'resets', dram: true, mood: 'tension', delay: 0.5,
+      v: 'resets', dram: true, mood: 'tension', label: 'CPR · 28 days', delay: 0.5,
       who: { name: 'Tibo', handle: '@thsottiaux', org: 'OpenAI' },
       days: [
         { d: 1, date: 'Oct 5', t: 'Default speed ~50% faster across GPT-6 Astra and GPT-6.1 Sol.' },
@@ -246,12 +247,13 @@
         { d: 28, date: 'Nov 1', t: 'Banked 2/2', r: true, last: true },
       ],
       n: [
-        'In its final four weeks, it shipped something every single day. On thirteen of those days, the thing it shipped was a reset.',
+        'So on October 5th, it began CPR: ship something every single day, for twenty-eight days.',
+        'On thirteen of those days, the thing it shipped was a reset.',
         'Day 25: “Graduating from The Reset Company to The Token Company.”',
         'Day 26: “Next two days will be resets.”',
         'Day 27: “Banked, one of two.”',
         'Day 28 — November 1st: “Banked, two of two.”',
-        'It was the last thing it ever shipped.',
+        'Twenty-eight days of compressions. It was the last thing it ever shipped.',
       ],
       tail: 1.0,
     },

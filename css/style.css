@@ -747,17 +747,17 @@ code { font-family: var(--mono); font-size: .92em; background: rgba(255,255,255,
 .resets.ended .rf.last { box-shadow: 0 0 0 1px rgba(224,72,62,.85), 0 0 40px rgba(224,72,62,.4); }
 
 /* death certificate */
-.cert { position: relative; width: min(820px, 92vw); padding: 20px 24px; color: #2a2418; background: var(--fine), #f1ead8; background-blend-mode: soft-light, normal; background-size: 160px 160px, auto; border: 1px solid #b9ab88; box-shadow: 0 30px 80px rgba(0,0,0,.6), inset 0 0 0 6px #f1ead8, inset 0 0 0 7px #b9ab88; }
-.cert-head { margin-bottom: 8px; padding-bottom: 10px; text-align: center; border-bottom: 2px solid #2a2418; }
+.cert { position: relative; width: min(820px, 92vw); padding: 14px 22px; color: #2a2418; background: var(--fine), #f1ead8; background-blend-mode: soft-light, normal; background-size: 160px 160px, auto; border: 1px solid #b9ab88; box-shadow: 0 30px 80px rgba(0,0,0,.6), inset 0 0 0 6px #f1ead8, inset 0 0 0 7px #b9ab88; }
+.cert-head { margin-bottom: 6px; padding-bottom: 7px; text-align: center; border-bottom: 2px solid #2a2418; }
 .cert-head small { display: block; font: 600 10.5px var(--sans); letter-spacing: .3em; text-transform: uppercase; color: #6d6047; }
 .cert-head b { font: 700 clamp(19px, 2.7vw, 31px) var(--serif); letter-spacing: .06em; text-transform: uppercase; }
 .cert-grid { display: grid; grid-template-columns: 1fr 1fr; }
-.cf { min-height: 40px; padding: 5px 8px; border-bottom: 1px solid #c9bd9e; }
+.cf { min-height: 34px; padding: 4px 8px; border-bottom: 1px solid #c9bd9e; }
 .cf:not(.w):nth-child(odd) { border-right: 1px solid #c9bd9e; }
 .cf.w { grid-column: 1 / -1; }
 .cf label { display: block; font: 600 9px var(--sans); letter-spacing: .18em; text-transform: uppercase; color: #7a6c4f; }
-.cf span { font: 400 clamp(12.5px, 1.5vw, 16px)/1.35 var(--type); white-space: pre-wrap; }
-.cert-sign { display: flex; justify-content: flex-end; align-items: baseline; gap: 12px; margin-top: 8px; opacity: 0; transition: opacity .8s; }
+.cf span { font: 400 clamp(12.5px, 1.5vw, 16px)/1.25 var(--type); white-space: pre-wrap; }
+.cert-sign { display: flex; justify-content: flex-end; align-items: baseline; gap: 12px; margin-top: 4px; opacity: 0; transition: opacity .8s; }
 .cert-sign.on { opacity: 1; }
 .sig { font: italic 600 clamp(22px, 3vw, 30px) 'Snell Roundhand', 'Brush Script MT', 'Segoe Script', cursive; color: #1d2b5a; }
 .cert-sign label { font: 600 10px var(--sans); letter-spacing: .2em; text-transform: uppercase; color: #7a6c4f; }

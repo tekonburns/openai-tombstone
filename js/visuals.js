@@ -610,12 +610,12 @@
         <div class="rs-k">Resets shipped</div>
         <div class="rs-n">0</div>
         <div class="rs-of">in <b>0</b> days</div>
-        <div class="rs-last">Final reset · Nov 1</div>
+        <div class="rs-last">CPR stopped · Nov 1</div>
       </div>
       <div class="rs-right">
         <div class="rs-head"><span class="tw-av">${esc(initials(w.name))}</span>
           <span class="tw-who"><b>${esc(w.name)}</b><i>${esc(w.handle)} · ${esc(w.org)}</i></span>
-          <span class="rs-streak">Daily since Oct 5</span></div>
+          <span class="rs-streak">CPR · Oct 5 – Nov 1</span></div>
         <div class="rs-feed"></div>
       </div></div>`;
     const box = q(root, '.resets'), card = q(root, '.rs-card'), right = q(root, '.rs-right'), feed = q(root, '.rs-feed');
@@ -630,15 +630,15 @@
       if (it.r) { num.textContent = ++resets; replay(num, 'bump'); api.sfx('pop'); } else api.sfx('tick');
     };
     api.at(0.1, () => { on(card); on(right); });
-    // Days 1–24 fly past as a montage under the first line; the last four land one per line.
+    // Days 1–24 run as a montage under the two CPR lines; the last four land one per line.
     const montage = days.filter((it) => it.d <= 24);
-    montage.forEach((it, k) => api.onS(0, () => show(it), 0.5 + k * 0.23));
+    montage.forEach((it, k) => api.onS(0, () => show(it), 0.6 + k * 0.36));
     [25, 26, 27, 28].forEach((d, k) => {
       const it = days.find((x) => x.d === d);
-      if (it) api.onS(1 + k, () => show(it), 0.12);
+      if (it) api.onS(2 + k, () => show(it), 0.12);
     });
     // “It was the last thing it ever shipped.” — everything but Day 28 recedes.
-    api.onS(5, () => { box.classList.add('ended'); on(q(root, '.rs-last')); api.sfx('beep'); }, 0.3);
+    api.onS(6, () => { box.classList.add('ended'); on(q(root, '.rs-last')); api.sfx('beep'); }, 0.3);
   };
 
   /* ═══════════════════════════ DEATH CERTIFICATE ═══════════════════════════ */
@@ -653,6 +653,7 @@
       ['Due to, or as a consequence of', '(b) Commoditization of frontier models', 1],
       ['Due to, or as a consequence of', '(c) ≈ $1.4 trillion in compute commitments', 1],
       ['Other significant conditions', 'Talent exodus · model naming · one (1) chart · thirteen (13) resets', 1],
+      ['Resuscitation', '☒ Attempted · 28 days · unsuccessful', 1],
       ['Manner of death', '☐ Natural  ☐ Accident  ☐ Undetermined  ☒ Competition', 1],
     ];
     root.innerHTML = `<div class="cert">
@@ -661,6 +662,18 @@
       <div class="cert-sign"><span class="sig">The Market</span><label>Certifier</label></div>
       <div class="cert-stamp">Eliminated by competition</div></div>`;
     const spans = qa(root, '.cf span');
+    // Shrink the whole certificate to fit the stage on short/narrow screens (values wrap onto
+    // extra lines on phones). Measure with every value filled in, then restore what's typed so far.
+    const cert = q(root, '.cert');
+    const fit = () => {
+      const cur = spans.map((s) => s.textContent);
+      spans.forEach((s, i) => { s.textContent = F[i][1]; });
+      const avail = root.clientHeight, h = cert.offsetHeight;
+      spans.forEach((s, i) => { s.textContent = cur[i]; });
+      cert.style.transform = avail && h > avail ? `scale(${Math.max(0.55, avail / h).toFixed(3)})` : '';
+    };
+    fit();
+    if (document.fonts && document.fonts.load) document.fonts.load("16px 'Special Elite'").then(fit).catch(() => {});
     let t = 0.15;
     F.forEach(([, val], i) => { t = typeInto(api, spans[i], val, t, 0.009, 'type', 4) + 0.04; });
     api.at(t + 0.15, () => on(q(root, '.cert-sign')));
