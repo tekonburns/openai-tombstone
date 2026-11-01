@@ -491,7 +491,7 @@
 
   // Reading-pace duration (seconds) for an on-screen caption line.
   RIP.est = function (text) {
-    const w = text.trim().split(/\s+/).length;
+    const w = text.trim().split(/\s+/).filter((t) => /[\p{L}\p{N}]/u.test(t)).length; // a lone “—” is not a word
     const p = (text.match(/[,;:—–]/g) || []).length;
     const s = (text.match(/[.!?]/g) || []).length;
     return 0.15 + w / 3.0 + p * 0.12 + s * 0.18;

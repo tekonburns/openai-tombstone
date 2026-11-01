@@ -524,10 +524,13 @@
   function closeBook() { $('#book').hidden = true; }
 
   /* ═══════════════════════════ THE PROJECTOR ═══════════════════════════ */
+  // Seconds a caption line stays up: reading-pace estimate × the scene's optional `pace`
+  // multiplier, or an explicit per-line override in `nd` ({ lineIndex: seconds }).
+  const lineDur = (sc, k) => { const nd = sc.nd && sc.nd[k]; return nd != null ? nd : RIP.est(sc.n[k]) * (sc.pace || 1); };
   function sceneEst(sc) {
     const n = sc.n || [];
     if (!n.length) return sc.dur || 2.5;
-    const narr = n.reduce((a, l) => a + RIP.est(l) + 0.15, 0);
+    const narr = n.reduce((a, l, k) => a + lineDur(sc, k) + 0.15, 0);
     return Math.max(sc.dur || 0, (sc.delay ?? 0.35) + narr + (sc.tail ?? 0.45));
   }
   const P = {
@@ -645,7 +648,7 @@
       P.sStart[k] = P.t;
       P.sCbs.forEach((cb) => { if (cb.s === k) P.cues.push({ t: P.t + cb.d, fn: cb.fn }); });
     }
-    P.sEndAt = P.t + RIP.est(text) + 0.15;
+    P.sEndAt = P.t + lineDur(sc, k) + 0.15;
   }
 
   function frame(now) {

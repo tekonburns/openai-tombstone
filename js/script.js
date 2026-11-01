@@ -103,29 +103,27 @@
       foot: { text: 'The “T” in GPT — the Transformer — was invented by researchers at Google in 2017.', at: { s: 0, d: 1.4 } },
       n: [
         'In Mountain View, Google — whose researchers had invented the “T” in GPT — declared a “code red.”',
-        'Remember that phrase.',
       ],
-      tail: 0.45,
+      tail: 0.6,
     },
 
     /* ─────────────── III ─────────────── */
     { v: 'chapter', num: 'III', title: 'Everyone Else', years: '2024 — 2025', dur: 2.0, mood: 'grief' },
     {
-      v: 'names', mode: 'exodus',
+      v: 'names', mode: 'exodus', pace: 0.9,
       n: [
         'By 2024, the founders were leaving — some to start rivals, some to join them.',
         'Of the original eleven, three remained.',
       ],
-      tail: 0.55,
+      tail: 0.5,
     },
     {
-      v: 'crash', mood: 'tension',
+      v: 'crash', mood: 'tension', pace: 0.88,
       n: [
         'In January 2025, a little-known Chinese lab called DeepSeek released a model that rivaled OpenAI’s best — and gave it away.',
-        'A week later, Nvidia lost nearly six hundred billion dollars of market value in a single day.',
         'OpenAI complained DeepSeek may have trained on its outputs. The internet, whose writing trained OpenAI, was unmoved.',
       ],
-      tail: 0.45,
+      tail: 0.4,
     },
     {
       v: 'picker',
@@ -172,7 +170,7 @@
     {
       v: 'alert',
       panels: [
-        { place: 'Mountain View', date: 'December 2022', title: 'Code Red', sub: 'Google, after ChatGPT', at: { t: 0.15 } },
+        { place: 'Mountain View', date: 'November 2025', title: 'Gemini 3', sub: 'Straight to #1 on the leaderboards', kind: 'launch', at: { t: 0.15 } },
         { place: 'San Francisco', date: 'December 2025', title: 'Code Red', sub: 'OpenAI, after Gemini 3', at: { s: 1, d: 0.15 } },
       ],
       n: [
@@ -258,15 +256,6 @@
       tail: 1.0,
     },
     {
-      v: 'status', dram: true, mood: 'void',
-      n: [
-        'That evening, the status page reported elevated error rates.',
-        'Engineers quickly identified the issue.',
-        'The issue was everyone else.',
-      ],
-      tail: 1.5,
-    },
-    {
       v: 'flatline', dram: true, mood: null, kb: false, delay: 4.1,
       n: ['At 6:49 PM Pacific, aged ten years, ten months and twenty-one days, OpenAI was pronounced dead.'],
       tail: 1.0,
@@ -283,7 +272,7 @@
       tail: 0.8,
     },
     {
-      v: 'suspects',
+      v: 'suspects', pace: 0.86,
       n: [
         'There was no single killer. As on the Orient Express, everyone had a knife.',
         'Google had the distribution.',

@@ -298,11 +298,11 @@
 
   /* ═══════════════════════════ CODE RED ═══════════════════════════ */
   V.alert = (root, sc, api) => {
-    root.innerHTML = `<div class="alert${sc.panels.length > 1 ? ' dual' : ''}">${sc.panels.map((p) => `<div class="al-panel">
+    root.innerHTML = `<div class="alert${sc.panels.length > 1 ? ' dual' : ''}">${sc.panels.map((p) => `<div class="al-panel${p.kind ? ' ' + esc(p.kind) : ''}">
         <div class="al-place">${esc(p.place)} · ${esc(p.date)}</div><div class="al-title">${esc(p.title)}</div><div class="al-sub">${esc(p.sub)}</div></div>`).join('')}</div>
       ${sc.foot ? `<div class="al-foot">${esc(sc.foot.text)}</div>` : ''}`;
     const ps = qa(root, '.al-panel');
-    sc.panels.forEach((p, i) => api.cue(p.at, () => { ps[i].classList.add('on'); api.sfx('alarm'); }));
+    sc.panels.forEach((p, i) => api.cue(p.at, () => { ps[i].classList.add('on'); api.sfx(p.kind === 'launch' ? 'rise' : 'alarm'); }));
     if (sc.foot) api.cue(sc.foot.at, () => on(q(root, '.al-foot')));
   };
 
@@ -339,29 +339,27 @@
     }
   };
 
-  /* ═══════════════════════════ DEEPSEEK / NVDA ═══════════════════════════ */
+  /* ═══════════════════════════ DEEPSEEK ═══════════════════════════ */
   V.crash = (root, sc, api) => {
-    // A gently rising price… then Monday.
-    const pts = [];
-    let v = 0.5;
-    for (let i = 0; i < 44; i++) { v += Math.sin(i * 1.7) * 0.012 + Math.cos(i * 0.63) * 0.01 + 0.0045; pts.push(v); }
-    pts.push(v + 0.01, v - 0.02, v - 0.3, v - 0.47, v - 0.5, v - 0.46, v - 0.49);
-    const W = 600, H = 240, lo = Math.min(...pts), hi = Math.max(...pts);
-    const d = pts.map((p, i) => `${i ? 'L' : 'M'}${((i / (pts.length - 1)) * W).toFixed(1)},${(14 + (1 - (p - lo) / (hi - lo)) * (H - 28)).toFixed(1)}`).join(' ');
     root.innerHTML = `<div class="crash">
       <div class="ds-card"><div class="ds-k">January 20, 2025</div><div class="ds-n">DeepSeek-R1</div>
         <div class="ds-meta">Reasoning model · Open weights<br>MIT License · Hangzhou, China</div><span class="ds-free">Free</span></div>
-      <div class="ticker">
-        <div class="tk-head"><b>NVDA</b><span class="tk-px">▼ 16.97%</span></div>
-        <svg viewBox="0 0 ${W} ${H}" aria-hidden="true"><path class="tk-grid" d="M0 60H600M0 120H600M0 180H600"/><path class="tk-line" pathLength="1" d="${d}"/></svg>
-        <div class="tk-loss">−$<span>0</span></div>
-        <div class="tk-cap">Monday, January 27, 2025 · the largest one-day loss of market value in U.S. stock market history</div></div></div>`;
+      <div class="ds-right">
+        <div class="price">
+          <div class="pr-k">API price · per million output tokens</div>
+          <div class="pr-row"><span>OpenAI o1</span><i style="--w:100%"></i><b>$60.00</b></div>
+          <div class="pr-row ds"><span>DeepSeek-R1</span><i style="--w:3.65%"></i><b>$2.19</b></div>
+        </div>
+        <div class="stmt">
+          <div class="stmt-k">OpenAI · statement to press · January 29, 2025</div>
+          <div class="stmt-t">“We are aware of and reviewing indications that DeepSeek may have inappropriately distilled our models.”</div>
+          <div class="stamp">Unmoved</div>
+        </div>
+      </div></div>`;
     api.onS(0, () => on(q(root, '.ds-card')), 0.4);
-    api.onS(1, () => {
-      on(q(root, '.ticker'));
-      api.sfx('crash');
-      api.count(q(root, '.tk-loss span'), 0, 589000000000, 3.4, fmt);
-    }, 0.2);
+    api.onS(0, () => { on(q(root, '.price')); api.sfx('pop'); }, 2.6);
+    api.onS(1, () => on(q(root, '.stmt')), 0.15);
+    api.onS(1, () => { on(q(root, '.stmt .stamp')); api.sfx('stamp'); }, 3.3);
   };
 
   /* ═══════════════════════════ MELTING GPUs ═══════════════════════════ */
@@ -521,38 +519,6 @@
         if (p >= 1) w.classList.add('s2');
       });
     }, 0.15);
-  };
-
-  /* ═══════════════════════════ STATUS PAGE ═══════════════════════════ */
-  V.status = (root, sc, api) => {
-    const comps = ['ChatGPT', 'API', 'Sora', 'Codex'];
-    root.innerHTML = `<div class="status">
-      <div class="stt-head"><span><b>OpenAI</b> Status</span><span class="stt-date">Sunday, November 1, 2026</span></div>
-      <div class="stt-banner ok">All Systems Operational</div>
-      <div class="stt-comps">${comps.map((c) => `<div class="stt-c"><div class="stt-cn"><span>${c}</span><em>Operational</em></div><div class="stt-bars">${'<i></i>'.repeat(48)}</div></div>`).join('')}</div>
-      <div class="stt-log"></div></div>`;
-    const banner = q(root, '.stt-banner'), log = q(root, '.stt-log'), cs = qa(root, '.stt-c');
-    const setBanner = (cls, text) => { banner.className = 'stt-banner ' + cls; banner.textContent = text; };
-    const degrade = (c, lvl, n) => {
-      c.className = 'stt-c ' + lvl;
-      q(c, 'em').textContent = lvl === 'red' ? 'Major Outage' : 'Degraded Performance';
-      const bars = qa(c, '.stt-bars i');
-      for (let j = bars.length - n; j < bars.length; j++) bars[j].className = lvl;
-    };
-    const entry = (time, kind, text, cls = '') => add(log, `<div class="stt-e ${cls}"><b>${kind}</b> — ${text}<i>${time}</i></div>`, 'afterbegin');
-    api.onS(0, () => {
-      setBanner('warn', 'Degraded Performance');
-      degrade(cs[0], 'warn', 2); degrade(cs[1], 'warn', 1);
-      entry('Nov 1, 6:27 PM PST', 'Investigating', 'We are investigating elevated error rates across all products.');
-      api.sfx('pop');
-    }, 1.0);
-    api.onS(1, () => { setBanner('bad', 'Major Outage'); cs.forEach((c, i) => degrade(c, 'red', 3 + i)); api.sfx('error'); }, 0.15);
-    api.onS(2, () => { entry('Nov 1, 6:44 PM PST', 'Identified', 'The issue has been identified: everyone else.'); api.sfx('pop'); }, 0.1);
-    api.onS(2, () => {
-      setBanner('dead', 'Permanently closed');
-      entry('Nov 1, 6:49 PM PST', 'Resolved', 'This incident has been resolved. OpenAI has not.', 'res');
-      api.sfx('stamp');
-    }, 1.35);
   };
 
   /* ═══════════════════════════ FLATLINE ═══════════════════════════ */
