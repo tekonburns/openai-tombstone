@@ -579,7 +579,7 @@
         return api.at(spec.t ?? 0, fn);
       },
       tick(fn) { if (live()) P.ticks.push(fn); },
-      sfx(name, ...a) { if (live()) A.sfx(name, ...a); },
+      sfx(name, ...a) { if (live() && !P.seeking) A.sfx(name, ...a); },
       count(node, from, to, secs, f = fmt) {
         const t0 = P.t;
         api.tick((t) => {
@@ -618,7 +618,7 @@
       el.appendChild(d);
       void d.offsetWidth; // commit the start state so the transition runs (works in background tabs too)
       d.classList.add('on');
-      if (o.sfx) A.sfx(o.sfx);
+      if (o.sfx && !P.seeking) A.sfx(o.sfx);
     }));
     // Chapter III: a coroner's-chart tag naming the scene's contributing factor.
     if (sc.factor) {
@@ -632,7 +632,7 @@
     el.classList.add('in');
     // Chapter cards punctuate the score: the running theme fades out at the cut, a single bell
     // rings under the title, and the chapter's own theme enters with its first scene.
-    if (sc.v === 'chapter') { A.setMood(null); api.at(0.12, () => A.sfx('bell')); }
+    if (sc.v === 'chapter') { A.setMood(null); api.at(0.12, () => { if (!P.seeking) A.sfx('bell'); }); }
     else A.setMood(sceneMood[i]);
     const doc = $('#doc');
     doc.classList.toggle('is-old', sc.era === 'old');
@@ -725,12 +725,23 @@
   const toggle = () => (P.playing ? pause() : play());
   function next() { if (P.idx < 0) return; go(P.idx + 1); if (!P.playing) play(); }
   function prev() { if (P.idx < 0) return; go(P.t > 3 ? P.idx : Math.max(0, P.idx - 1)); if (!P.playing) play(); }
+  // Seek to an exact film time: jump to the scene, then run its clock forward (cues fire, sound
+  // cues muted) so the picture lands mid-scene instead of snapping to the scene start.
   function seekTo(frac) {
-    const target = frac * P.total;
+    const target = Math.max(0, Math.min(P.total - 0.05, frac * P.total));
     let i = 0;
     while (i < SCRIPT.length - 1 && P.starts[i + 1] <= target) i++;
+    const wasPlaying = P.playing;
     go(i);
-    if (!P.playing) play();
+    const into = target - P.starts[i];
+    if (into > 0.1) {
+      P.seeking = true; P.playing = true;
+      const step = 1 / 30;
+      for (let t = 0; t < into && P.idx === i; t += step) stepTime(step);
+      P.playing = wasPlaying; P.seeking = false;
+    }
+    if (!wasPlaying) play();
+    updateProgress(true);
   }
 
   function setMusic(on) { A.setOn(on); store.set('music', on); $('#cMusic').classList.toggle('on', on); }
@@ -755,7 +766,7 @@
     if (!force && now - lastProg < 200) return;
     lastProg = now;
     if (P.idx < 0) return;
-    const pos = P.starts[P.idx] + Math.min(P.t, P.est[P.idx]);
+    const pos = P.scrub != null ? P.scrub * P.total : P.starts[P.idx] + Math.min(P.t, P.est[P.idx]);
     $('#progFill').style.width = ((pos / P.total) * 100).toFixed(2) + '%';
     $('#cTime').textContent = `${fmtTime(pos)} / ${fmtTime(P.total)}`;
   }
@@ -865,10 +876,14 @@
       go(+b.dataset.i);
       if (!P.playing) play();
     });
-    $('#progress').addEventListener('click', (e) => {
-      const r = $('#progress').getBoundingClientRect();
-      seekTo(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)));
-    });
+    const prog = $('#progress');
+    const fracOf = (e) => { const r = prog.getBoundingClientRect(); return Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); };
+    let dragging = false;
+    prog.addEventListener('pointerdown', (e) => { dragging = true; try { prog.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } P.scrub = fracOf(e); updateProgress(true); poke(true); });
+    prog.addEventListener('pointermove', (e) => { if (!dragging) return; P.scrub = fracOf(e); updateProgress(true); });
+    const endDrag = (e) => { if (!dragging) return; dragging = false; const f = fracOf(e); P.scrub = null; seekTo(f); poke(); };
+    prog.addEventListener('pointerup', endDrag);
+    prog.addEventListener('pointercancel', () => { dragging = false; P.scrub = null; updateProgress(true); });
     $('#splashPlay').addEventListener('click', () => startFilm(0));
 
     const doc = $('#doc');

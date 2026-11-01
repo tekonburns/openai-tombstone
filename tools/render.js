@@ -105,7 +105,7 @@ const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(
   });
 
   const enc = ffmpeg(['-y', '-f', 'image2pipe', '-framerate', String(FPS), '-i', 'pipe:0',
-    '-c:v', 'libx264', '-preset', 'slow', '-crf', String(CRF), '-maxrate', '10M', '-bufsize', '20M', '-tune', 'film', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', tmpVideo]);
+    '-c:v', 'libx264', '-preset', 'slow', '-crf', String(CRF), '-maxrate', '10M', '-bufsize', '20M', '-tune', 'film', '-g', '30', '-keyint_min', '30', '-sc_threshold', '0', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', tmpVideo]);
   const encDone = once(enc, 'close');
 
   const dt = 1000 / FPS;
