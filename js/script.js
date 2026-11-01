@@ -351,7 +351,7 @@
     { h: 'Special thanks', list: ['Every competitor', '800 million weekly users, briefly', 'Whoever made the chart'] },
     {
       h: 'A note on the facts',
-      disc: 'This is satire — an imagined obituary. OpenAI has not actually died. Events through 2025 are drawn from public reporting and public statements, and quotes are reproduced from public posts, blog posts and published reports. Chapter IV onward — the 2026 headlines, the status page, the coroner, the certificate and the death itself — is fiction. All trademarks belong to their owners. No GPUs were harmed in the making of this film. Several were melted.',
+      disc: 'This is satire — an imagined obituary. OpenAI has not actually died. Events through 2025 are drawn from public reporting and public statements, and quotes are reproduced from public posts, blog posts and published reports. Chapter IV onward — the 2026 headlines, the coroner, the certificate and the death itself — is fiction; the daily posts in “CPR” are real through Day 27, and Day 28 is tomorrow’s. All trademarks belong to their owners. No GPUs were harmed in the making of this film. Several were melted.',
     },
     { end: '“It was never open. Now it’s closed.”' },
   ];
