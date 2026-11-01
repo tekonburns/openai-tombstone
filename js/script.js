@@ -28,7 +28,7 @@
     {
       v: 'chatfail', mood: 'void', label: 'Cold open', delay: 0.4, tail: 0.4,
       n: [
-        'On October 28th, 2026, at 6:49 PM Pacific, somebody asked ChatGPT a question.',
+        'On November 1st, 2026, at 6:49 PM Pacific, somebody asked ChatGPT a question.',
         'It did not answer.',
         'This is the story of a company that promised to be open, started the fastest race in the history of technology — and lost it.',
       ],
@@ -162,10 +162,10 @@
       bottom: { t: 'OpenAI Group PBC', s: 'Public benefit corporation · Oct 28, 2025', k: 'fp', tag: 'Valued at $500 billion', st: 1 },
       side: { t: 'Microsoft', s: '~27% stake', k: 'ms', link: 'owns', st: 2 },
       cues: [{ t: 0.15 }, { s: 0, d: 1.3 }, { s: 0, d: 2.9 }],
-      ov: [{ at: { s: 1, d: 0.2 }, cls: 'countdown', sfx: 'beep', html: '<small>Time remaining</small><b>365</b><small>days</small>' }],
+      ov: [{ at: { s: 1, d: 0.2 }, cls: 'countdown', sfx: 'beep', html: '<small>Time remaining</small><b>369</b><small>days</small>' }],
       n: [
         'On October 28th, 2025, it finished becoming a for-profit public benefit corporation, valued at half a trillion dollars.',
-        'It had exactly one year to live.',
+        'It had one year and four days to live.',
       ],
       tail: 0.7,
     },
@@ -210,24 +210,10 @@
       tail: 0.7,
     },
     {
-      v: 'status', dram: true, mood: 'void',
-      n: [
-        'On the evening of October 28th, 2026, the status page reported elevated error rates.',
-        'Engineers quickly identified the issue.',
-        'The issue was everyone else.',
-      ],
-      tail: 1.5,
-    },
-    {
-      v: 'flatline', dram: true, mood: null, kb: false, delay: 4.1,
-      n: ['At 6:49 PM Pacific, aged ten years, ten months and seventeen days, OpenAI was pronounced dead.'],
-      tail: 1.0,
-    },
-    {
       /* The 28-day shipping streak posted by @thsottiaux (Oct 5 – Nov 1, 2026). Days 1–27 are the
-         real posts, lightly abridged; Day 24 landed at 6:49 PM PT — the time of death. Day 28 is
-         tomorrow’s, as promised in Day 26 (“Next two days will be resets… banked”). */
-      v: 'resets', dram: true, mood: 'void', label: 'The Reset Company', delay: 0.5,
+         real posts, lightly abridged. Day 28 — the day it dies — is tomorrow’s, as promised in
+         Day 26 (“Next two days will be resets… banked”). */
+      v: 'resets', dram: true, mood: 'tension', delay: 0.5,
       who: { name: 'Tibo', handle: '@thsottiaux', org: 'OpenAI' },
       days: [
         { d: 1, date: 'Oct 5', t: 'Default speed ~50% faster across GPT-6 Astra and GPT-6.1 Sol.' },
@@ -253,26 +239,39 @@
         { d: 21, date: 'Oct 25', t: 'Wonder what happens the remaining seven days. But today is a reset.', r: true },
         { d: 22, date: 'Oct 26', t: 'Terra is back. 2× more usage than 6.1 Sol.' },
         { d: 23, date: 'Oct 27', t: 'Much requested iCloud Mail & Calendar plugins. Just kidding, today is a reset.', r: true },
-        { d: 24, date: 'Oct 28', t: 'Text your dot just like anyone else.', tod: true },
+        { d: 24, date: 'Oct 28', t: 'Text your dot just like anyone else.' },
         { d: 25, date: 'Oct 29', t: 'Doubling all usage limits for Pro 100/200/500 and Business Premium. “Graduating from The Reset Company to The Token Company.”' },
         { d: 26, date: 'Oct 30', t: 'Switch between multiple accounts on mobile. Next two days will be resets… banked… do with this what you may 👀' },
         { d: 27, date: 'Oct 31', t: 'Banked 1/2', r: true },
         { d: 28, date: 'Nov 1', t: 'Banked 2/2', r: true, last: true },
       ],
       n: [
-        'Nobody told the reset button.',
-        'It had shipped something every day for twenty-eight days. On thirteen of them, the thing it shipped was a reset.',
-        'Day 25, the morning after: “Graduating from The Reset Company to The Token Company.”',
+        'In its final four weeks, it shipped something every single day. On thirteen of those days, the thing it shipped was a reset.',
+        'Day 25: “Graduating from The Reset Company to The Token Company.”',
         'Day 26: “Next two days will be resets.”',
         'Day 27: “Banked, one of two.”',
-        'Day 28: “Banked, two of two.”',
-        'There was nothing left to bank.',
+        'Day 28 — November 1st: “Banked, two of two.”',
+        'It was the last thing it ever shipped.',
       ],
-      tail: 1.1,
+      tail: 1.0,
+    },
+    {
+      v: 'status', dram: true, mood: 'void',
+      n: [
+        'That evening, the status page reported elevated error rates.',
+        'Engineers quickly identified the issue.',
+        'The issue was everyone else.',
+      ],
+      tail: 1.5,
+    },
+    {
+      v: 'flatline', dram: true, mood: null, kb: false, delay: 4.1,
+      n: ['At 6:49 PM Pacific, aged ten years, ten months and twenty-one days, OpenAI was pronounced dead.'],
+      tail: 1.0,
     },
 
     /* ─────────────── V ─────────────── */
-    { v: 'chapter', num: 'V', title: 'The Coroner’s Report', years: 'October 28, 2026', dur: 2.0, mood: 'grief', dram: true },
+    { v: 'chapter', num: 'V', title: 'The Coroner’s Report', years: 'November 1, 2026', dur: 2.0, mood: 'grief', dram: true },
     {
       v: 'certificate', dram: true, delay: 0.6,
       n: [
@@ -318,10 +317,10 @@
       kicker: 'OpenAI Charter · April 9, 2018', title: 'Long-term safety',
       body: ['We are concerned about late-stage AGI development becoming a competitive race without time for adequate safety precautions. Therefore, if a value-aligned, safety-conscious project comes close to building AGI before we do, ==we commit to stop competing== with and start assisting this project.'],
       hl: { s: 0, d: 2.0 },
-      stamp: { text: 'Promise kept · Oct 28, 2026', at: { s: 1, d: 0.8 } },
+      stamp: { text: 'Promise kept · Nov 1, 2026', at: { s: 1, d: 0.8 } },
       n: [
         'In 2018, OpenAI promised that if someone else neared the finish line first, it would stop competing.',
-        'On October 28th, 2026, it kept its promise.',
+        'On November 1st, 2026, it kept its promise.',
       ],
       tail: 0.8,
     },

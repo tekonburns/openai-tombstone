@@ -91,7 +91,7 @@
   /* ═══════════════════════════ COLD OPEN ═══════════════════════════ */
   V.chatfail = (root, sc, api) => {
     root.innerHTML = `<div class="chatui">
-      <div class="chat-head"><span class="chat-model">ChatGPT <i>▾</i></span><span class="chat-date">Oct 28, 2026 · 6:49 PM</span></div>
+      <div class="chat-head"><span class="chat-model">ChatGPT <i>▾</i></span><span class="chat-date">Nov 1, 2026 · 6:49 PM</span></div>
       <div class="chat-log"></div>
       <div class="chat-input"><span class="typed"></span><span class="caret"></span><span class="ph">Ask anything</span><span class="send">↑</span></div></div>`;
     const typed = q(root, '.typed'), log = q(root, '.chat-log');
@@ -527,7 +527,7 @@
   V.status = (root, sc, api) => {
     const comps = ['ChatGPT', 'API', 'Sora', 'Codex'];
     root.innerHTML = `<div class="status">
-      <div class="stt-head"><span><b>OpenAI</b> Status</span><span class="stt-date">Wednesday, October 28, 2026</span></div>
+      <div class="stt-head"><span><b>OpenAI</b> Status</span><span class="stt-date">Sunday, November 1, 2026</span></div>
       <div class="stt-banner ok">All Systems Operational</div>
       <div class="stt-comps">${comps.map((c) => `<div class="stt-c"><div class="stt-cn"><span>${c}</span><em>Operational</em></div><div class="stt-bars">${'<i></i>'.repeat(48)}</div></div>`).join('')}</div>
       <div class="stt-log"></div></div>`;
@@ -543,14 +543,14 @@
     api.onS(0, () => {
       setBanner('warn', 'Degraded Performance');
       degrade(cs[0], 'warn', 2); degrade(cs[1], 'warn', 1);
-      entry('Oct 28, 6:27 PM PDT', 'Investigating', 'We are investigating elevated error rates across all products.');
+      entry('Nov 1, 6:27 PM PST', 'Investigating', 'We are investigating elevated error rates across all products.');
       api.sfx('pop');
     }, 1.0);
     api.onS(1, () => { setBanner('bad', 'Major Outage'); cs.forEach((c, i) => degrade(c, 'red', 3 + i)); api.sfx('error'); }, 0.15);
-    api.onS(2, () => { entry('Oct 28, 6:44 PM PDT', 'Identified', 'The issue has been identified: everyone else.'); api.sfx('pop'); }, 0.1);
+    api.onS(2, () => { entry('Nov 1, 6:44 PM PST', 'Identified', 'The issue has been identified: everyone else.'); api.sfx('pop'); }, 0.1);
     api.onS(2, () => {
       setBanner('dead', 'Permanently closed');
-      entry('Oct 28, 6:49 PM PDT', 'Resolved', 'This incident has been resolved. OpenAI has not.', 'res');
+      entry('Nov 1, 6:49 PM PST', 'Resolved', 'This incident has been resolved. OpenAI has not.', 'res');
       api.sfx('stamp');
     }, 1.35);
   };
@@ -560,7 +560,7 @@
     root.innerHTML = `<div class="ekg">
       <div class="ekg-top"><span class="ekg-hr">HR<b>72</b></span><span class="ekg-name">PATIENT: OPENAI · AGE 10</span><span class="ekg-hr spo">SpO₂<b>98</b></span></div>
       <canvas></canvas>
-      <div class="ekg-tod">Time of death · 6:49 PM PDT · October 28, 2026</div></div>`;
+      <div class="ekg-tod">Time of death · 6:49 PM PST · November 1, 2026</div></div>`;
     const cv = q(root, 'canvas'), ctx = cv.getContext('2d'), hr = q(root, '.ekg-hr b'), spo = q(root, '.spo b');
     const beats = [0.45, 1.15, 2.0, 3.05];
     const rates = [72, 62, 48, 31];
@@ -610,16 +610,15 @@
         <div class="rs-k">Resets shipped</div>
         <div class="rs-n">0</div>
         <div class="rs-of">in <b>0</b> days</div>
-        <div class="rs-tod">Time of death · 6:49 PM</div>
+        <div class="rs-last">Final reset · Nov 1</div>
       </div>
       <div class="rs-right">
         <div class="rs-head"><span class="tw-av">${esc(initials(w.name))}</span>
           <span class="tw-who"><b>${esc(w.name)}</b><i>${esc(w.handle)} · ${esc(w.org)}</i></span>
           <span class="rs-streak">Daily since Oct 5</span></div>
         <div class="rs-feed"></div>
-      </div>
-      <div class="stamp rs-stamp">Account closed</div></div>`;
-    const card = q(root, '.rs-card'), right = q(root, '.rs-right'), feed = q(root, '.rs-feed');
+      </div></div>`;
+    const box = q(root, '.resets'), card = q(root, '.rs-card'), right = q(root, '.rs-right'), feed = q(root, '.rs-feed');
     const num = q(root, '.rs-n'), ofDays = q(root, '.rs-of b');
     let resets = 0;
     const show = (it) => {
@@ -629,33 +628,27 @@
       row.classList.add('on');
       ofDays.textContent = it.d;
       if (it.r) { num.textContent = ++resets; replay(num, 'bump'); api.sfx('pop'); } else api.sfx('tick');
-      if (it.tod) {
-        const tod = add(feed, `<div class="rf tod"><span class="rf-day">6:49 PM<i>Oct 28</i></span><span class="rf-tx"><em>Time of death</em><i></i></span></div>`);
-        void tod.offsetWidth;
-        tod.classList.add('on');
-        on(q(root, '.rs-tod'));
-        api.sfx('beep');
-      }
     };
     api.at(0.1, () => { on(card); on(right); });
-    // Days 1–24 fly past as a montage under the second line; the post-mortem days land one per line.
+    // Days 1–24 fly past as a montage under the first line; the last four land one per line.
     const montage = days.filter((it) => it.d <= 24);
-    montage.forEach((it, k) => api.onS(1, () => show(it), 0.1 + k * 0.23));
+    montage.forEach((it, k) => api.onS(0, () => show(it), 0.5 + k * 0.23));
     [25, 26, 27, 28].forEach((d, k) => {
       const it = days.find((x) => x.d === d);
-      if (it) api.onS(2 + k, () => show(it), 0.12);
+      if (it) api.onS(1 + k, () => show(it), 0.12);
     });
-    api.onS(6, () => { on(q(root, '.rs-stamp')); api.sfx('stamp'); }, 0.35);
+    // “It was the last thing it ever shipped.” — everything but Day 28 recedes.
+    api.onS(5, () => { box.classList.add('ended'); on(q(root, '.rs-last')); api.sfx('beep'); }, 0.3);
   };
 
   /* ═══════════════════════════ DEATH CERTIFICATE ═══════════════════════════ */
   V.certificate = (root, sc, api) => {
     const F = [
       ['Name of decedent', 'OpenAI'],
-      ['Age', '10 years, 10 months, 17 days'],
+      ['Age', '10 years, 10 months, 21 days'],
       ['Also known as', 'OpenAI, Inc. · OpenAI LP · OpenAI Global, LLC · OpenAI Group PBC', 1],
       ['Date of birth', 'December 11, 2015'],
-      ['Date of death', 'October 28, 2026 · 6:49 PM PDT'],
+      ['Date of death', 'November 1, 2026 · 6:49 PM PST'],
       ['Immediate cause', '(a) ELIMINATED BY COMPETITION', 1],
       ['Due to, or as a consequence of', '(b) Commoditization of frontier models', 1],
       ['Due to, or as a consequence of', '(c) ≈ $1.4 trillion in compute commitments', 1],
