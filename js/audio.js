@@ -454,10 +454,25 @@
     }
   };
 
+  // Entry curve for a mood bus. From silence (film start, after a chapter bell, after the
+  // flatline) the theme swells in over ~2.4 s with a slight crescendo overshoot so the return is
+  // felt; between two moods it simply blends in.
+  function enterCurve(gain, t, fromSilence) {
+    gain.setValueAtTime(0.0001, t);
+    if (fromSilence) {
+      gain.linearRampToValueAtTime(0.3, t + 0.6);
+      gain.linearRampToValueAtTime(1.25, t + 2.4);
+      gain.linearRampToValueAtTime(1, t + 5.0);
+    } else {
+      gain.linearRampToValueAtTime(1, t + 0.5);
+    }
+  }
+
   M.setMood = function (m) {
     const next = m || null;
     if (next === M.mood) return;
     if (M.rec) M.rec.push({ t: M.clock(), k: 'mood', mood: next });
+    const fromSilence = !MOODS[M.mood];
     M.mood = next;
     M.bar = 0;
     M.nextBar = 0;
@@ -475,6 +490,7 @@
     }
     if (next && MOODS[next]) {
       M.moodBus = ctx.createGain();
+      enterCurve(M.moodBus.gain, ctx.currentTime, fromSilence);
       M.moodBus.connect(M.music);
       schedule();
     }
@@ -522,11 +538,14 @@
         const mood = MOODS[ev.mood];
         if (!mood) return;
         const start = ev.t, end = i + 1 < moods.length ? moods[i + 1].t : duration;
+        const fromSilence = i === 0 || !MOODS[moods[i - 1].mood];
+        const swell = fromSilence && end - start > 5.4;
         const bus = octx.createGain();
         bus.connect(e.music);
-        bus.gain.setValueAtTime(1, 0);
-        bus.gain.setValueAtTime(1, end);
-        bus.gain.linearRampToValueAtTime(0.0001, end + 0.4); // same fade as setMood()
+        enterCurve(bus.gain, start, swell);
+        const endAt = Math.max(end, start + (swell ? 5.0 : 0.5) + 0.01);
+        bus.gain.setValueAtTime(1, endAt);
+        bus.gain.linearRampToValueAtTime(0.0001, endAt + 0.4); // same fade as setMood()
         let t = start + 0.03, n = 0;
         while (t < end) { playBar(mood, bus, t, n++); t += M.barLen; }
       });
