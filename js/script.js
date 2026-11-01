@@ -28,7 +28,7 @@
     {
       v: 'chatfail', mood: 'void', label: 'Cold open', delay: 0.4, tail: 0.4,
       n: [
-        'On November 1st, 2026, at 6:49 PM Pacific, somebody asked ChatGPT a question.',
+        'On November 1st, 2026, at 3:27 PM Pacific, somebody asked ChatGPT a question.',
         'It did not answer.',
         'This is the story of a company that promised to be open, started the fastest race in the history of technology — and lost it.',
       ],
@@ -257,7 +257,7 @@
     },
     {
       v: 'flatline', dram: true, mood: null, kb: false, delay: 4.1,
-      n: ['At 6:49 PM Pacific, aged ten years, ten months and twenty-one days, OpenAI was pronounced dead.'],
+      n: ['At 3:27 PM Pacific, aged ten years, ten months and twenty-one days, OpenAI was pronounced dead.'],
       tail: 1.0,
     },
 

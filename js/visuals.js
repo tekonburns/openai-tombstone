@@ -91,7 +91,7 @@
   /* ═══════════════════════════ COLD OPEN ═══════════════════════════ */
   V.chatfail = (root, sc, api) => {
     root.innerHTML = `<div class="chatui">
-      <div class="chat-head"><span class="chat-model">ChatGPT <i>▾</i></span><span class="chat-date">Nov 1, 2026 · 6:49 PM</span></div>
+      <div class="chat-head"><span class="chat-model">ChatGPT <i>▾</i></span><span class="chat-date">Nov 1, 2026 · 3:27 PM</span></div>
       <div class="chat-log"></div>
       <div class="chat-input"><span class="typed"></span><span class="caret"></span><span class="ph">Ask anything</span><span class="send">↑</span></div></div>`;
     const typed = q(root, '.typed'), log = q(root, '.chat-log');
@@ -526,7 +526,7 @@
     root.innerHTML = `<div class="ekg">
       <div class="ekg-top"><span class="ekg-hr">HR<b>72</b></span><span class="ekg-name">PATIENT: OPENAI · AGE 10</span><span class="ekg-hr spo">SpO₂<b>98</b></span></div>
       <canvas></canvas>
-      <div class="ekg-tod">Time of death · 6:49 PM PST · November 1, 2026</div></div>`;
+      <div class="ekg-tod">Time of death · 3:27 PM PST · November 1, 2026</div></div>`;
     const cv = q(root, 'canvas'), ctx = cv.getContext('2d'), hr = q(root, '.ekg-hr b'), spo = q(root, '.spo b');
     const beats = [0.45, 1.15, 2.0, 3.05];
     const rates = [72, 62, 48, 31];
@@ -614,7 +614,7 @@
       ['Age', '10 years, 10 months, 21 days'],
       ['Also known as', 'OpenAI, Inc. · OpenAI LP · OpenAI Global, LLC · OpenAI Group PBC', 1],
       ['Date of birth', 'December 11, 2015'],
-      ['Date of death', 'November 1, 2026 · 6:49 PM PST'],
+      ['Date of death', 'November 1, 2026 · 3:27 PM PST'],
       ['Immediate cause', '(a) ELIMINATED BY COMPETITION', 1],
       ['Due to, or as a consequence of', '(b) Commoditization of frontier models', 1],
       ['Due to, or as a consequence of', '(c) ≈ $1.4 trillion in compute commitments', 1],
