@@ -31,10 +31,20 @@ To engrave a different URL without redeploying, add `?qr=https://your.site/whate
 | `js/script.js` | The screenplay: every scene, its captions and cue timings |
 | `js/visuals.js` | One builder per scene type — the "footage" |
 | `js/app.js` | The projector: scene scheduling, caption sync, controls, QR wiring, guestbook |
+| `og.png` | The link-preview card (X, iMessage, Slack…), rendered from the cemetery by `tools/make-og.js` |
 
 Keyboard: **Space** play/pause · **←/→** scenes · **M** score · **C** subtitles ·
 **F** fullscreen (or pay respects, at the grave) · **Esc** back to the grave.
 Debug: `?scene=21` starts the film at scene 21.
+
+## Link previews
+
+`index.html` carries Open Graph + `twitter:card = summary_large_image` tags pointing at
+`og.png` with an **absolute** URL, so pasting the link on X shows the large card. If you host
+the site elsewhere, update the `og:url` / `og:image` / `twitter:image` URLs and the canonical
+link. To re-render the card after changing the tombstone: `node tools/make-og.js` (needs
+Chrome and `puppeteer-core` on `NODE_PATH`). X caches cards per URL; append `?v=2` to the
+link if you need it to re-fetch.
 
 ## On the facts
 
