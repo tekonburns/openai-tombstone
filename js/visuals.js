@@ -602,6 +602,52 @@
     api.at(FLAT + 0.5, () => on(q(root, '.ekg-tod')));
   };
 
+  /* ═══════════════════════════ THE RESET COMPANY ═══════════════════════════ */
+  V.resets = (root, sc, api) => {
+    const w = sc.who, days = sc.days;
+    root.innerHTML = `<div class="resets">
+      <div class="rs-card">
+        <div class="rs-k">Resets shipped</div>
+        <div class="rs-n">0</div>
+        <div class="rs-of">in <b>0</b> days</div>
+        <div class="rs-tod">Time of death · 6:49 PM</div>
+      </div>
+      <div class="rs-right">
+        <div class="rs-head"><span class="tw-av">${esc(initials(w.name))}</span>
+          <span class="tw-who"><b>${esc(w.name)}</b><i>${esc(w.handle)} · ${esc(w.org)}</i></span>
+          <span class="rs-streak">Daily since Oct 5</span></div>
+        <div class="rs-feed"></div>
+      </div>
+      <div class="stamp rs-stamp">Account closed</div></div>`;
+    const card = q(root, '.rs-card'), right = q(root, '.rs-right'), feed = q(root, '.rs-feed');
+    const num = q(root, '.rs-n'), ofDays = q(root, '.rs-of b');
+    let resets = 0;
+    const show = (it) => {
+      const row = add(feed, `<div class="rf${it.r ? ' reset' : ''}${it.last ? ' last' : ''}">
+        <span class="rf-day">Day ${it.d}<i>${esc(it.date)}</i></span><span class="rf-tx">${esc(it.t)}</span>${it.r ? '<span class="rf-tag">Reset</span>' : ''}</div>`);
+      void row.offsetWidth;
+      row.classList.add('on');
+      ofDays.textContent = it.d;
+      if (it.r) { num.textContent = ++resets; replay(num, 'bump'); api.sfx('pop'); } else api.sfx('tick');
+      if (it.tod) {
+        const tod = add(feed, `<div class="rf tod"><span class="rf-day">6:49 PM<i>Oct 28</i></span><span class="rf-tx"><em>Time of death</em><i></i></span></div>`);
+        void tod.offsetWidth;
+        tod.classList.add('on');
+        on(q(root, '.rs-tod'));
+        api.sfx('beep');
+      }
+    };
+    api.at(0.1, () => { on(card); on(right); });
+    // Days 1–24 fly past as a montage under the second line; the post-mortem days land one per line.
+    const montage = days.filter((it) => it.d <= 24);
+    montage.forEach((it, k) => api.onS(1, () => show(it), 0.1 + k * 0.23));
+    [25, 26, 27, 28].forEach((d, k) => {
+      const it = days.find((x) => x.d === d);
+      if (it) api.onS(2 + k, () => show(it), 0.12);
+    });
+    api.onS(6, () => { on(q(root, '.rs-stamp')); api.sfx('stamp'); }, 0.35);
+  };
+
   /* ═══════════════════════════ DEATH CERTIFICATE ═══════════════════════════ */
   V.certificate = (root, sc, api) => {
     const F = [
@@ -613,7 +659,7 @@
       ['Immediate cause', '(a) ELIMINATED BY COMPETITION', 1],
       ['Due to, or as a consequence of', '(b) Commoditization of frontier models', 1],
       ['Due to, or as a consequence of', '(c) ≈ $1.4 trillion in compute commitments', 1],
-      ['Other significant conditions', 'Talent exodus · model naming · one (1) chart', 1],
+      ['Other significant conditions', 'Talent exodus · model naming · one (1) chart · thirteen (13) resets', 1],
       ['Manner of death', '☐ Natural  ☐ Accident  ☐ Undetermined  ☒ Competition', 1],
     ];
     root.innerHTML = `<div class="cert">
