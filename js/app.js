@@ -620,6 +620,14 @@
       d.classList.add('on');
       if (o.sfx) A.sfx(o.sfx);
     }));
+    // Chapter III: a coroner's-chart tag naming the scene's contributing factor.
+    if (sc.factor) {
+      const f = sc.factor, tag = document.createElement('div');
+      tag.className = 'factor-tag';
+      tag.innerHTML = `<small>Contributing factor ${f.n} of ${f.of}</small><b>${esc(f.name)}</b>`;
+      el.appendChild(tag);
+      api.at(0.5, () => { tag.classList.add('on'); A.sfx('tick'); });
+    }
     void el.offsetWidth;
     el.classList.add('in');
     A.setMood(sceneMood[i]);

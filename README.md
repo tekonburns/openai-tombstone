@@ -55,7 +55,7 @@ link if you need it to re-fetch.
 ## On the facts
 
 Everything through 2025 is drawn from public reporting and public statements. Chapter IV
-onward — the 2026 headlines, the status page, the coroner's certificate, the death itself — is
-fiction. The one exception is "The Reset Company": Days 1–27 are the real daily posts from
+onward — the 2026 headlines, the coroner's certificate, the death itself — is
+fiction. The one exception is "CPR": Days 1–27 are the real daily posts from
 @thsottiaux (Oct 5–31, 2026), lightly abridged; Day 28 — the day of death — is tomorrow's, as
 promised on Day 26. No GPUs were harmed. Several were melted.

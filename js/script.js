@@ -108,9 +108,9 @@
     },
 
     /* ─────────────── III ─────────────── */
-    { v: 'chapter', num: 'III', title: 'Everyone Else', years: '2024 — 2025', dur: 2.0, mood: 'grief' },
+    { v: 'chapter', num: 'III', title: 'Pre-existing Conditions', years: '2024 — 2025', dur: 2.0, mood: 'grief' },
     {
-      v: 'names', mode: 'exodus', pace: 0.9,
+      v: 'names', mode: 'exodus', pace: 0.9, factor: { n: 1, of: 7, name: 'Talent' },
       n: [
         'By 2024, the founders were leaving — some to start rivals, some to join them.',
         'Of the original eleven, three remained.',
@@ -118,7 +118,7 @@
       tail: 0.5,
     },
     {
-      v: 'crash', mood: 'tension', pace: 0.88,
+      v: 'crash', mood: 'tension', pace: 0.88, factor: { n: 2, of: 7, name: 'Price' },
       n: [
         'In January 2025, a little-known Chinese lab called DeepSeek released a model that rivaled OpenAI’s best — and gave it away.',
         'OpenAI complained DeepSeek may have trained on its outputs. The internet, whose writing trained OpenAI, was unmoved.',
@@ -126,7 +126,7 @@
       tail: 0.4,
     },
     {
-      v: 'picker',
+      v: 'picker', factor: { n: 3, of: 7, name: 'Naming' },
       tweet: { name: 'Sam Altman', handle: '@sama', text: 'how about we fix our model naming by this summer and everyone gets a few more months to make fun of us (which we very much deserve) until then?', date: 'Apr 14, 2025', at: { s: 1, d: 0.05 } },
       o2: { s: 0, d: 6.4 },
       n: [
@@ -136,7 +136,7 @@
       tail: 0.85,
     },
     {
-      v: 'chartcrime',
+      v: 'chartcrime', factor: { n: 4, of: 7, name: 'The Chart' },
       n: [
         'In August came GPT-5. Its launch chart showed 52.8 percent towering over 69.1 —',
         'and 69.1 standing exactly as tall as 30.8.',
@@ -145,7 +145,7 @@
       tail: 0.6,
     },
     {
-      v: 'circle',
+      v: 'circle', factor: { n: 5, of: 7, name: 'The Money' },
       n: [
         'By autumn, it had committed to roughly 1.4 trillion dollars of computing power.',
         'Some of its suppliers were also investing in OpenAI — so that it could buy their chips. Analysts drew diagrams of the money. The diagrams were circles.',
@@ -154,7 +154,7 @@
       tail: 0.7,
     },
     {
-      v: 'structure',
+      v: 'structure', factor: { n: 6, of: 7, name: 'The Clock' },
       top: { t: 'OpenAI Foundation', s: 'Nonprofit · ~26% stake', k: 'np', st: 0 },
       link: { t: 'controls', st: 1 },
       bottom: { t: 'OpenAI Group PBC', s: 'Public benefit corporation · Oct 28, 2025', k: 'fp', tag: 'Valued at $500 billion', st: 1 },
@@ -168,7 +168,7 @@
       tail: 0.7,
     },
     {
-      v: 'alert',
+      v: 'alert', factor: { n: 7, of: 7, name: 'Gemini 3' },
       panels: [
         { place: 'Mountain View', date: 'November 2025', title: 'Gemini 3', sub: 'Straight to #1 on the leaderboards', kind: 'launch', at: { t: 0.15 } },
         { place: 'San Francisco', date: 'December 2025', title: 'Code Red', sub: 'OpenAI, after Gemini 3', at: { s: 1, d: 0.15 } },

@@ -618,8 +618,8 @@
       ['Immediate cause', '(a) ELIMINATED BY COMPETITION', 1],
       ['Due to, or as a consequence of', '(b) Commoditization of frontier models', 1],
       ['Due to, or as a consequence of', '(c) ≈ $1.4 trillion in compute commitments', 1],
-      ['Other significant conditions', 'Talent exodus · model naming · one (1) chart · thirteen (13) resets', 1],
-      ['Resuscitation', '☒ Attempted · 28 days · unsuccessful', 1],
+      ['Pre-existing conditions (7)', 'Talent · price · naming · one (1) chart · the money · the clock · Gemini 3', 1],
+      ['Resuscitation', '☒ Attempted · 28 days · thirteen (13) resets · unsuccessful', 1],
       ['Manner of death', '☐ Natural  ☐ Accident  ☐ Undetermined  ☒ Competition', 1],
     ];
     root.innerHTML = `<div class="cert">
