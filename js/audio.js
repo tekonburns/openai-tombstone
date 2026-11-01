@@ -109,6 +109,7 @@
   }
 
   M.init = function () {
+    if (M.disabled) return; // render mode: events are logged and the mix is rendered offline
     unlockAudioSession();
     if (M.ctx) {
       if (!M.paused && M.ctx.state !== 'running' && M.ctx.state !== 'closed') {
@@ -129,39 +130,10 @@
     }
     ctx.onstatechange = () => { if (ctx.state === 'running' && !M.paused) schedule(); };
 
-    // Separate music and SFX output paths so loud sound effects never duck/pump the score.
-    const musicLim = ctx.createDynamicsCompressor();
-    musicLim.threshold.value = -6; musicLim.knee.value = 8; musicLim.ratio.value = 4;
-    musicLim.attack.value = 0.015; musicLim.release.value = 0.25;
-    musicLim.connect(ctx.destination);
-
-    const sfxLim = ctx.createDynamicsCompressor();
-    sfxLim.threshold.value = -14; sfxLim.knee.value = 6; sfxLim.ratio.value = 3.5;
-    sfxLim.attack.value = 0.005; sfxLim.release.value = 0.2;
-    sfxLim.connect(ctx.destination);
-
-    // Cathedral reverb shared as a parallel send.
-    M.verb = ctx.createConvolver();
-    M.verb.buffer = impulse(ctx, 2.4, 2.5);
-    const verbMusic = ctx.createGain(); verbMusic.gain.value = 0.42;
-    M.verb.connect(verbMusic); verbMusic.connect(musicLim);
-
-    M.music = ctx.createGain();
+    const e = buildGraph(ctx);
+    cur = e;
+    M.music = e.music; M.sfxBus = e.sfxBus; M.verb = e.verb; M.noiseBuf = e.noiseBuf;
     M.music.gain.value = M.on ? 0.68 : 0;
-    M.music.connect(musicLim);
-    M.music.connect(M.verb);
-
-    M.sfxBus = ctx.createGain();
-    M.sfxBus.gain.value = 0.85;
-    M.sfxBus.connect(sfxLim);
-    const sfxSend = ctx.createGain(); sfxSend.gain.value = 0.18;
-    M.sfxBus.connect(sfxSend); sfxSend.connect(M.verb);
-
-    // 1.5 s of white noise reused by percussion/atmosphere effects.
-    const nb = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 1.5), ctx.sampleRate);
-    const d = nb.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    M.noiseBuf = nb;
 
     if (M.mood && MOODS[M.mood]) {
       M.moodBus = ctx.createGain();
@@ -171,6 +143,43 @@
     setInterval(schedule, 140);
     schedule();
   };
+
+  // The whole synthesis graph on any BaseAudioContext (the live one, or an OfflineAudioContext
+  // when rendering the film to a file). `cur` is whichever engine the voices should play into.
+  let cur = null;
+  const now = () => (cur.now ? cur.now() : cur.ctx.currentTime);
+  function buildGraph(ctx) {
+    const e = { ctx };
+    // Separate music and SFX output paths so loud sound effects never duck/pump the score.
+    const musicLim = ctx.createDynamicsCompressor();
+    musicLim.threshold.value = -6; musicLim.knee.value = 8; musicLim.ratio.value = 4;
+    musicLim.attack.value = 0.015; musicLim.release.value = 0.25;
+    musicLim.connect(ctx.destination);
+    const sfxLim = ctx.createDynamicsCompressor();
+    sfxLim.threshold.value = -14; sfxLim.knee.value = 6; sfxLim.ratio.value = 3.5;
+    sfxLim.attack.value = 0.005; sfxLim.release.value = 0.2;
+    sfxLim.connect(ctx.destination);
+    // Cathedral reverb shared as a parallel send.
+    e.verb = ctx.createConvolver();
+    e.verb.buffer = impulse(ctx, 2.4, 2.5);
+    const verbMusic = ctx.createGain(); verbMusic.gain.value = 0.42;
+    e.verb.connect(verbMusic); verbMusic.connect(musicLim);
+    e.music = ctx.createGain();
+    e.music.gain.value = 0.68;
+    e.music.connect(musicLim);
+    e.music.connect(e.verb);
+    e.sfxBus = ctx.createGain();
+    e.sfxBus.gain.value = 0.85;
+    e.sfxBus.connect(sfxLim);
+    const sfxSend = ctx.createGain(); sfxSend.gain.value = 0.18;
+    e.sfxBus.connect(sfxSend); sfxSend.connect(e.verb);
+    // 1.5 s of white noise reused by percussion/atmosphere effects.
+    const nb = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 1.5), ctx.sampleRate);
+    const d = nb.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    e.noiseBuf = nb;
+    return e;
+  }
 
   function impulse(ctx, secs, decay) {
     const len = Math.floor(ctx.sampleRate * secs);
@@ -224,7 +233,7 @@
 
   // Sub-fundamental + warm octave cello harmonics so bass translates clearly on phone speakers too.
   function bass(dest, freq, t, dur, fastIn) {
-    const ctx = M.ctx;
+    const ctx = cur.ctx;
     const t0 = Math.max(ctx.currentTime + 0.005, t);
     const att = fastIn ? 0.25 : 0.75;
     const g = ctx.createGain();
@@ -248,7 +257,7 @@
   }
 
   function pad(dest, freq, t, dur, bright, peak, fastIn) {
-    const ctx = M.ctx;
+    const ctx = cur.ctx;
     const t0 = Math.max(ctx.currentTime + 0.005, t);
     const att = fastIn ? 0.32 : 0.85;
     const g = ctx.createGain();
@@ -267,7 +276,7 @@
   }
 
   function pluck(dest, freq, t, vel) {
-    const ctx = M.ctx;
+    const ctx = cur.ctx;
     const t0 = Math.max(ctx.currentTime + 0.005, t);
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, t0);
@@ -284,9 +293,9 @@
   }
 
   function tone(freq, t, dur, o = {}) {
-    const ctx = M.ctx;
+    const ctx = cur.ctx;
     const t0 = Math.max(ctx.currentTime + 0.004, t);
-    const { type = 'sine', gain = 0.2, a = 0.01, r = 0.3, dest = M.sfxBus, to } = o;
+    const { type = 'sine', gain = 0.2, a = 0.01, r = 0.3, dest = cur.sfxBus, to } = o;
     const osc = ctx.createOscillator();
     osc.type = type;
     osc.frequency.setValueAtTime(freq, t0);
@@ -302,11 +311,11 @@
   }
 
   function noise(t, dur, o = {}) {
-    const ctx = M.ctx;
+    const ctx = cur.ctx;
     const t0 = Math.max(ctx.currentTime + 0.004, t);
-    const { gain = 0.2, type = 'bandpass', f = 1000, q = 1, a = 0.005, f2, dest = M.sfxBus } = o;
+    const { gain = 0.2, type = 'bandpass', f = 1000, q = 1, a = 0.005, f2, dest = cur.sfxBus } = o;
     const src = ctx.createBufferSource();
-    src.buffer = M.noiseBuf; src.loop = true;
+    src.buffer = cur.noiseBuf; src.loop = true;
     const fl = ctx.createBiquadFilter();
     fl.type = type; fl.frequency.setValueAtTime(f, t0); fl.Q.value = q;
     if (f2) fl.frequency.exponentialRampToValueAtTime(f2, t0 + dur);
@@ -322,107 +331,115 @@
   /* ---------- sound effects ---------- */
   const SFX = {
     chime() {
-      const t = M.ctx.currentTime;
+      const t = now();
       [[523.25, 0], [783.99, 0.09], [1046.5, 0.2]].forEach(([f, d]) => {
         tone(f, t + d, 3.2, { gain: 0.09, a: 0.005, r: 3 });
         tone(f * 2.76, t + d, 1.2, { gain: 0.025, a: 0.005, r: 1.1 });
       });
     },
     hit() {
-      const t = M.ctx.currentTime;
+      const t = now();
       tone(72, t, 1.6, { gain: 0.45, a: 0.01, r: 1.5, to: 36 });
       noise(t, 0.5, { type: 'lowpass', f: 500, gain: 0.12 });
     },
     boom() {
-      const t = M.ctx.currentTime;
+      const t = now();
       tone(64, t, 2.8, { gain: 0.7, a: 0.01, r: 2.6, to: 28 });
       noise(t, 1.8, { type: 'lowpass', f: 260, gain: 0.3 });
       tone(196, t, 3.5, { type: 'triangle', gain: 0.04, a: 0.02, r: 3.2 });
     },
     buzz(dur = 2.5) {
-      const ctx = M.ctx, t = ctx.currentTime + 0.004;
+      const ctx = cur.ctx, t = now() + 0.004;
       const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 120;
       const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2400; bp.Q.value = 3;
       const g = ctx.createGain(); g.gain.value = 0;
       for (let k = 0; k < dur * 14; k++) g.gain.setValueAtTime(Math.random() < 0.85 ? 0.022 : 0.004, t + k / 14);
       g.gain.setValueAtTime(0.0001, t + dur);
-      o.connect(bp); bp.connect(g); g.connect(M.sfxBus);
+      o.connect(bp); bp.connect(g); g.connect(cur.sfxBus);
       o.start(t); o.stop(t + dur + 0.05);
       tone(60, t, dur, { gain: 0.03, a: 0.05, r: 0.2 });
     },
     clunk() {
-      const t = M.ctx.currentTime;
+      const t = now();
       tone(110, t, 0.2, { gain: 0.35, to: 48 });
       noise(t, 0.06, { type: 'highpass', f: 2500, gain: 0.15 });
     },
     snip() {
-      const t = M.ctx.currentTime;
+      const t = now();
       noise(t, 0.05, { type: 'highpass', f: 4000, gain: 0.25 });
       noise(t + 0.09, 0.06, { type: 'highpass', f: 3500, gain: 0.3 });
     },
-    pop() { tone(520, M.ctx.currentTime, 0.09, { gain: 0.08, to: 900, r: 0.06 }); },
-    key() { noise(M.ctx.currentTime, 0.018, { f: 2800 + Math.random() * 1200, q: 2, gain: 0.05 }); },
+    pop() { tone(520, now(), 0.09, { gain: 0.08, to: 900, r: 0.06 }); },
+    key() { noise(now(), 0.018, { f: 2800 + Math.random() * 1200, q: 2, gain: 0.05 }); },
     type() {
-      const t = M.ctx.currentTime;
+      const t = now();
       noise(t, 0.025, { f: 2000 + Math.random() * 1800, q: 1.5, gain: 0.14 });
       tone(180, t, 0.04, { gain: 0.05, to: 90 });
     },
     error() {
-      const t = M.ctx.currentTime;
+      const t = now();
       tone(520, t, 0.13, { type: 'triangle', gain: 0.1 });
       tone(370, t + 0.14, 0.24, { type: 'triangle', gain: 0.1 });
     },
-    tick() { tone(1800, M.ctx.currentTime, 0.035, { gain: 0.035 }); },
+    tick() { tone(1800, now(), 0.035, { gain: 0.035 }); },
     rise() {
-      const t = M.ctx.currentTime;
+      const t = now();
       tone(220, t, 1.6, { type: 'triangle', gain: 0.04, a: 0.05, r: 0.4, to: 880 });
       for (let k = 0; k < 6; k++) tone(1200 + k * 180, t + 0.2 + k * 0.18, 0.12, { gain: 0.02 });
     },
     alarm() {
-      const t = M.ctx.currentTime;
+      const t = now();
       for (let k = 0; k < 4; k++) tone(k % 2 ? 620 : 740, t + k * 0.26, 0.24, { type: 'square', gain: 0.025, r: 0.05 });
     },
     news() {
-      const t = M.ctx.currentTime;
+      const t = now();
       tone(1175, t, 0.06, { gain: 0.05 });
       tone(1568, t + 0.07, 0.08, { gain: 0.05 });
     },
-    whoosh() { noise(M.ctx.currentTime, 0.75, { f: 350, f2: 2600, q: 0.9, gain: 0.2, a: 0.25 }); },
+    whoosh() { noise(now(), 0.75, { f: 350, f2: 2600, q: 0.9, gain: 0.2, a: 0.25 }); },
     crash() {
-      const t = M.ctx.currentTime;
+      const t = now();
       tone(320, t, 1.8, { type: 'sawtooth', gain: 0.06, a: 0.02, r: 0.5, to: 40 });
       tone(58, t + 1.2, 1.8, { gain: 0.5, to: 30, r: 1.6 });
     },
     stamp() {
-      const t = M.ctx.currentTime;
+      const t = now();
       tone(150, t, 0.22, { gain: 0.5, to: 55 });
       noise(t, 0.06, { type: 'lowpass', f: 1600, gain: 0.3 });
     },
-    sizzle() { noise(M.ctx.currentTime, 2.6, { type: 'highpass', f: 4500, gain: 0.04, a: 0.4 }); },
+    sizzle() { noise(now(), 2.6, { type: 'highpass', f: 4500, gain: 0.04, a: 0.4 }); },
     achv() {
-      const t = M.ctx.currentTime;
+      const t = now();
       tone(880, t, 0.14, { gain: 0.07 });
       tone(1318.5, t + 0.1, 0.3, { gain: 0.07, r: 0.25 });
     },
-    beep() { tone(960, M.ctx.currentTime, 0.14, { gain: 0.13, a: 0.004, r: 0.04 }); },
+    beep() { tone(960, now(), 0.14, { gain: 0.13, a: 0.004, r: 0.04 }); },
     flat(dur = 4) {
-      const ctx = M.ctx, t = ctx.currentTime + 0.004;
+      const ctx = cur.ctx, t = now() + 0.004;
       const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = 960;
       const g = ctx.createGain();
       g.gain.setValueAtTime(0.0001, t);
       g.gain.exponentialRampToValueAtTime(0.11, t + 0.005);
       g.gain.setTargetAtTime(0.0001, t + dur, 0.45);
-      o.connect(g); g.connect(M.sfxBus);
+      o.connect(g); g.connect(cur.sfxBus);
       o.start(t); o.stop(t + dur + 3);
     },
     shot() {
-      const t = M.ctx.currentTime;
+      const t = now();
       noise(t, 0.35, { type: 'lowpass', f: 3500, gain: 0.45, a: 0.002 });
       tone(90, t, 0.4, { gain: 0.4, to: 40 });
+    },
+    // Chapter sting: one deep temple bell (inharmonic partials) with a soft mallet thump.
+    bell() {
+      const t = now();
+      [[110, 0.26, 4.6], [264, 0.07, 2.8], [447, 0.035, 1.7], [583, 0.018, 1.1]]
+        .forEach(([f, g, d]) => tone(f, t, d, { gain: g, a: 0.006, r: d * 0.92 }));
+      noise(t, 0.3, { type: 'lowpass', f: 300, gain: 0.07, a: 0.004 });
     },
   };
 
   M.sfx = function (name, ...args) {
+    if (M.rec && SFX[name]) M.rec.push({ t: M.clock(), k: 'sfx', name, args });
     if (!M.ctx || M.paused || !SFX[name]) return;
     if (M.ctx.state === 'running') {
       try { SFX[name](...args); } catch (e) { /* never let a sound break the film */ }
@@ -440,6 +457,7 @@
   M.setMood = function (m) {
     const next = m || null;
     if (next === M.mood) return;
+    if (M.rec) M.rec.push({ t: M.clock(), k: 'mood', mood: next });
     M.mood = next;
     M.bar = 0;
     M.nextBar = 0;
@@ -487,6 +505,40 @@
     } else {
       schedule();
     }
+  };
+
+  /* ---------- offline render (tools/render.js) ----------
+     Rebuild the whole soundtrack from a recorded event log — the same voices, scheduled at
+     absolute film times into an OfflineAudioContext — and return the mixed AudioBuffer. */
+  M.renderOffline = async function (events, duration, sampleRate = 48000) {
+    const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    const octx = new OAC(2, Math.ceil((duration + 1) * sampleRate), sampleRate);
+    const e = buildGraph(octx);
+    const prev = cur;
+    cur = e;
+    try {
+      const moods = events.filter((ev) => ev.k === 'mood');
+      moods.forEach((ev, i) => {
+        const mood = MOODS[ev.mood];
+        if (!mood) return;
+        const start = ev.t, end = i + 1 < moods.length ? moods[i + 1].t : duration;
+        const bus = octx.createGain();
+        bus.connect(e.music);
+        bus.gain.setValueAtTime(1, 0);
+        bus.gain.setValueAtTime(1, end);
+        bus.gain.linearRampToValueAtTime(0.0001, end + 0.4); // same fade as setMood()
+        let t = start + 0.03, n = 0;
+        while (t < end) { playBar(mood, bus, t, n++); t += M.barLen; }
+      });
+      events.filter((ev) => ev.k === 'sfx').forEach((ev) => {
+        if (!SFX[ev.name]) return;
+        e.now = () => ev.t;
+        try { SFX[ev.name](...(ev.args || [])); } catch (err) { /* skip a broken cue */ }
+      });
+    } finally {
+      cur = prev; // hand the voices back to the live engine before the (slow) render runs
+    }
+    return octx.startRendering();
   };
 
   // Reading-pace duration (seconds) for an on-screen caption line.

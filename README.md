@@ -43,6 +43,20 @@ GitHub Pages caches everything for 10 minutes, and browsers may keep old `js/*.j
 re-fetching `index.html`. Run `tools/bump.sh` before committing: it stamps a fresh `?v=` on the
 CSS/JS URLs so every returning visitor gets the new build on their next load.
 
+## Rendering the MP4
+
+```bash
+npm i puppeteer-core            # once, anywhere; export NODE_PATH to its node_modules
+brew install ffmpeg             # once
+node tools/render.js            # → out/closed.mp4  (1920×1080 @ 30 fps, ~10 min to render)
+node tools/render.js --seconds 30 --width 1280 --height 720 --out out/preview.mp4   # quick check
+```
+
+The renderer drives the film frame by frame on a virtual clock (rAF, timers and every CSS
+animation are pinned to it), so the video is deterministic and never drops frames. The score and
+sound effects are logged during the pass and re-synthesised offline with the same engine
+(`RIP.Audio.renderOffline`), then muxed. `out/` is git-ignored.
+
 ## Link previews
 
 `index.html` carries Open Graph + `twitter:card = summary_large_image` tags pointing at

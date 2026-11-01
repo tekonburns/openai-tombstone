@@ -131,7 +131,7 @@
       <div class="ch-rule"></div>
       <h2 class="ch-title">${esc(sc.title)}</h2>
       ${sc.years ? `<div class="ch-years">${esc(sc.years)}</div>` : ''}</div>`;
-    api.at(0.1, () => { on(q(root, '.chapter-card')); api.sfx('hit'); });
+    api.at(0.1, () => on(q(root, '.chapter-card'))); // the bell is rung by the projector
   };
 
   /* ═══════════════════════════ DOCUMENTS ═══════════════════════════ */

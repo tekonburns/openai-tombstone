@@ -630,7 +630,10 @@
     }
     void el.offsetWidth;
     el.classList.add('in');
-    A.setMood(sceneMood[i]);
+    // Chapter cards punctuate the score: the running theme fades out at the cut, a single bell
+    // rings under the title, and the chapter's own theme enters with its first scene.
+    if (sc.v === 'chapter') { A.setMood(null); api.at(0.12, () => A.sfx('bell')); }
+    else A.setMood(sceneMood[i]);
     const doc = $('#doc');
     doc.classList.toggle('is-old', sc.era === 'old');
     doc.classList.toggle('is-dram', !!sc.dram);
@@ -912,6 +915,8 @@
 
   /* ═══════════════════════════ boot ═══════════════════════════ */
   function boot() {
+    // ?render — driven frame-by-frame by tools/render.js: no player chrome, audio logged not played.
+    if (params.has('render')) { document.body.classList.add('render'); A.disabled = true; }
     fillQR();
     sizeSky();
     requestAnimationFrame(drawSky);
