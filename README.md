@@ -33,7 +33,7 @@ To engrave a different URL without redeploying, add `?qr=https://your.site/whate
 | `js/app.js` | The projector: scene scheduling, caption sync, controls, QR wiring, guestbook |
 | `og.png` | The link-preview card (X, iMessage, Slack…), rendered from the cemetery by `tools/make-og.js` |
 
-Keyboard: **Space** play/pause · **←/→** scenes · **M** score · **C** subtitles ·
+Keyboard: **Space** play/pause · **←/→** scenes · **M** music · **C** subtitles ·
 **F** fullscreen (or pay respects, at the grave) · **Esc** back to the grave.
 Debug: `?scene=21` starts the film at scene 21.
 

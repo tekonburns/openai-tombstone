@@ -219,6 +219,7 @@ body.render .grain { opacity: .045; } /* lighter grain compresses far better in 
 .fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--gold), #f1d79a); }
 .marks { position: absolute; inset: 0; pointer-events: none; }
 .marks i { position: absolute; top: 5px; width: 2px; height: 8px; background: rgba(0,0,0,.7); }
+.marks i.sub { top: 7px; height: 4px; }
 .crow { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
 .cbtn { min-width: 38px; height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: rgba(236,230,217,.85); cursor: pointer; font-size: 15px; }
 .cbtn:hover { background: rgba(255,255,255,.1); }
@@ -232,6 +233,9 @@ body.render .grain { opacity: .045; } /* lighter grain compresses far better in 
 .chapters button { display: flex; width: 100%; justify-content: space-between; gap: 12px; padding: 9px 12px; border: 0; border-radius: 8px; background: transparent; cursor: pointer; text-align: left; font: 500 13.5px var(--sans); color: var(--bone); }
 .chapters button:hover { background: rgba(255,255,255,.07); }
 .chapters button.cur { color: var(--gold); }
+.chapters button.sub { padding-left: 30px; font-size: 13px; color: rgba(236,230,217,.72); }
+.chapters button.sub span::before { content: '└ '; color: var(--bone-dim); }
+.chapters button.sub.cur { color: var(--gold); }
 .chapters i { font: 400 12px var(--mono); font-style: normal; color: var(--bone-dim); }
 
 .splash { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; text-align: center; padding: 24px;

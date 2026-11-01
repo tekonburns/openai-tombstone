@@ -553,9 +553,10 @@
   const CHAPTERS = [];
   const sceneLabel = [];
   const sceneMood = [];
-  { let cur = '', curMood = null; SCRIPT.forEach((sc, i) => {
-      if (sc.v === 'chapter') { cur = sc.num ? `${sc.num} · ${sc.title}` : `${sc.label} · ${sc.title}`; CHAPTERS.push({ i, label: cur }); }
-      else if (sc.label) { cur = sc.label; if (sc.v !== 'tomb') CHAPTERS.push({ i, label: sc.label }); }
+  { let cur = '', curNum = '', curMood = null; SCRIPT.forEach((sc, i) => {
+      if (sc.v === 'chapter') { curNum = sc.num || ''; cur = sc.num ? `${sc.num} · ${sc.title}` : `${sc.label} · ${sc.title}`; CHAPTERS.push({ i, label: cur }); }
+      else if (sc.label && sc.sub) { cur = curNum ? `${curNum} · ${sc.label}` : sc.label; CHAPTERS.push({ i, label: sc.label, sub: true }); } // sub-section: indented, keeps the chapter numeral
+      else if (sc.label) { cur = sc.label; curNum = ''; if (sc.v !== 'tomb') CHAPTERS.push({ i, label: sc.label }); }
       if ('mood' in sc) curMood = sc.mood;
       sceneLabel[i] = cur;
       sceneMood[i] = curMood;
@@ -776,13 +777,13 @@
     b.setAttribute('aria-label', P.playing ? 'Pause' : 'Play');
   }
   function buildMarks() {
-    $('#progMarks').innerHTML = CHAPTERS.map((c) => `<i style="left:${((P.starts[c.i] / P.total) * 100).toFixed(2)}%" title="${esc(c.label)}"></i>`).join('');
+    $('#progMarks').innerHTML = CHAPTERS.map((c) => `<i class="${c.sub ? 'sub' : ''}" style="left:${((P.starts[c.i] / P.total) * 100).toFixed(2)}%" title="${esc(c.label)}"></i>`).join('');
   }
   function renderChapters() {
     const cur = P.idx;
     let active = -1;
     CHAPTERS.forEach((c, k) => { if (c.i <= cur) active = k; });
-    $('#chaptersMenu').innerHTML = CHAPTERS.map((c, k) => `<button data-i="${c.i}" class="${k === active ? 'cur' : ''}"><span>${esc(c.label)}</span><i>${fmtTime(P.starts[c.i])}</i></button>`).join('');
+    $('#chaptersMenu').innerHTML = CHAPTERS.map((c, k) => `<button data-i="${c.i}" class="${k === active ? 'cur' : ''}${c.sub ? ' sub' : ''}"><span>${esc(c.label)}</span><i>${fmtTime(P.starts[c.i])}</i></button>`).join('');
   }
   let hideT = 0;
   function poke(stay) {

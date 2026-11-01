@@ -86,7 +86,7 @@
     /* ─────────────── II ─────────────── */
     { v: 'chapter', num: 'II', title: 'A Low-Key Research Preview', years: '2022', dur: 2.0, mood: 'hope' },
     {
-      v: 'chat', theme: 'y2022', model: 'ChatGPT', label: 'November 30, 2022 · research preview',
+      v: 'chat', theme: 'y2022', model: 'ChatGPT', date: 'November 30, 2022 · research preview',
       msgs: [
         { r: 'user', t: 'Explain quantum computing in simple terms' },
         { r: 'bot', t: 'Quantum computing is a type of computing that uses quantum bits, or qubits. Unlike a regular bit, which is either a 0 or a 1, a qubit can be in a combination of both at the same time…' },
@@ -212,7 +212,7 @@
       /* CPR: the 28-day shipping streak posted by @thsottiaux (Oct 5 – Nov 1, 2026). Days 1–27 are
          the real posts, lightly abridged. Day 28 — the day it dies — is tomorrow’s, as promised in
          Day 26 (“Next two days will be resets… banked”). */
-      v: 'resets', dram: true, mood: 'tension', label: 'CPR · 28 days', delay: 0.5,
+      v: 'resets', dram: true, mood: 'tension', label: 'CPR · 28 days', sub: true, delay: 0.5,
       who: { name: 'Tibo', handle: '@thsottiaux', org: 'OpenAI' },
       days: [
         { d: 1, date: 'Oct 5', t: 'Default speed ~50% faster across GPT-6 Astra and GPT-6.1 Sol.' },

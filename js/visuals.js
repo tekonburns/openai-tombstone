@@ -249,7 +249,7 @@
   /* ═══════════════════════════ CHAT UI ═══════════════════════════ */
   V.chat = (root, sc, api) => {
     root.innerHTML = `<div class="chatui ${sc.theme || ''}">
-      <div class="chat-head"><span class="chat-model">${esc(sc.model || 'ChatGPT')}</span><span class="chat-date">${esc(sc.label || '')}</span></div>
+      <div class="chat-head"><span class="chat-model">${esc(sc.model || 'ChatGPT')}</span><span class="chat-date">${esc(sc.date || '')}</span></div>
       <div class="chat-log"></div>
       <div class="chat-input"><span class="typed"></span><span class="caret"></span><span class="ph">Send a message…</span><span class="send">↑</span></div></div>`;
     const log = q(root, '.chat-log'), typed = q(root, '.typed');
