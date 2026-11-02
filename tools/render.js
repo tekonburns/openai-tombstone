@@ -4,6 +4,7 @@
 
      node tools/render.js [--out out/closed.mp4] [--fps 30] [--width 1920] [--height 1080]
                           [--seconds N (preview only)] [--crf 20]
+     node tools/render.js --audio-only out/closed.video.mp4   # soundtrack only, onto an encoded video track
 
    How it works
      • Headless Chrome opens index.html?render=1&test=render (no player chrome, no network).
@@ -27,6 +28,7 @@ const ROOT = path.resolve(__dirname, '..');
 const OUT = path.resolve(arg('out', path.join(ROOT, 'out', 'closed.mp4')));
 const FPS = +arg('fps', 30), W = +arg('width', 1920), H = +arg('height', 1080), CRF = +arg('crf', 20);
 const LIMIT = +arg('seconds', 0);
+const AUDIO_ONLY = arg('audio-only', ''); // re-run the clock without capturing, render the mix, mux onto this video track
 const CHROME = process.env.CHROME || [
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser',
@@ -86,7 +88,7 @@ const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(
   const tmpWav = OUT.replace(/\.mp4$/i, '') + '.audio.wav';
 
   const browser = await puppeteer.launch({
-    executablePath: CHROME, headless: 'new',
+    executablePath: CHROME, headless: 'new', protocolTimeout: 3600000, // the offline audio render is one long call
     args: ['--mute-audio', '--hide-scrollbars', '--disable-gpu-vsync', '--run-all-compositor-stages-before-draw', `--window-size=${W},${H}`],
   });
   const page = await browser.newPage();
@@ -104,9 +106,9 @@ const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(
     RIP.player.openDoc(true);
   });
 
-  const enc = ffmpeg(['-y', '-f', 'image2pipe', '-framerate', String(FPS), '-i', 'pipe:0',
+  const enc = AUDIO_ONLY ? null : ffmpeg(['-y', '-f', 'image2pipe', '-framerate', String(FPS), '-i', 'pipe:0',
     '-c:v', 'libx264', '-preset', 'slow', '-crf', String(CRF), '-maxrate', '10M', '-bufsize', '20M', '-tune', 'film', '-g', '30', '-keyint_min', '30', '-sc_threshold', '0', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', tmpVideo]);
-  const encDone = once(enc, 'close');
+  const encDone = enc ? once(enc, 'close') : Promise.resolve();
 
   const dt = 1000 / FPS;
   let frames = 0, lastLog = Date.now();
@@ -121,8 +123,10 @@ const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(
     }, dt);
     if (state.view !== 'doc') break;
     if (LIMIT && frames / FPS >= LIMIT) break;
-    const { data } = await client.send('Page.captureScreenshot', { format: 'jpeg', quality: 95, optimizeForSpeed: true });
-    if (!enc.stdin.write(Buffer.from(data, 'base64'))) await once(enc.stdin, 'drain');
+    if (enc) {
+      const { data } = await client.send('Page.captureScreenshot', { format: 'jpeg', quality: 95, optimizeForSpeed: true });
+      if (!enc.stdin.write(Buffer.from(data, 'base64'))) await once(enc.stdin, 'drain');
+    }
     frames++;
     if (Date.now() - lastLog > 10000) {
       lastLog = Date.now();
@@ -130,10 +134,11 @@ const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(
       console.log(`  ${fmt(frames / FPS)} of film · scene ${state.idx} · ${frames} frames · ${(frames / el).toFixed(1)} fps render speed`);
     }
   }
-  enc.stdin.end();
+  if (enc) enc.stdin.end();
   const duration = frames / FPS;
-  console.log(`frames: ${frames} (${fmt(duration)}) — encoding video…`);
+  console.log(`frames: ${frames} (${fmt(duration)})${enc ? ' — encoding video…' : ''}`);
   await encDone;
+  fs.writeFileSync(OUT.replace(/\.mp4$/i, '') + '.events.json', JSON.stringify(await page.evaluate(() => RIP.Audio.rec)));
 
   // Audio: rebuild the mix offline from the event log, export 16-bit WAV, pull it over in chunks.
   console.log('rendering soundtrack offline…');
@@ -167,10 +172,13 @@ const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(
   await browser.close();
 
   console.log('muxing…');
-  const mux = ffmpeg(['-y', '-i', tmpVideo, '-i', tmpWav, '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', OUT]);
+  const videoTrack = AUDIO_ONLY ? path.resolve(AUDIO_ONLY) : tmpVideo;
+  const mux = ffmpeg(['-y', '-i', videoTrack, '-i', tmpWav, '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', OUT]);
   mux.stdin.end();
-  await once(mux, 'close');
-  fs.unlinkSync(tmpVideo); fs.unlinkSync(tmpWav);
+  const [code] = await once(mux, 'close');
+  if (code !== 0) throw new Error('ffmpeg mux failed');
+  if (fs.existsSync(tmpVideo) && path.resolve(tmpVideo) !== path.resolve(OUT)) fs.unlinkSync(tmpVideo);
+  fs.unlinkSync(tmpWav);
   const mb = (fs.statSync(OUT).size / 1048576).toFixed(1);
   console.log(`wrote ${path.relative(process.cwd(), OUT)} · ${W}×${H} @ ${FPS}fps · ${fmt(duration)} · ${mb} MB · took ${fmt((Date.now() - t0) / 1000)}`);
 })().catch((e) => { console.error(e); process.exit(1); });
